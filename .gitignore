@@ -1,0 +1,11 @@
+### Example user template template
+### Example user template
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+node_modules
+Snap.svg-0.4.1
+# Created by .ignore support plugin (hsz.mobi)

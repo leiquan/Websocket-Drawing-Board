@@ -1,0 +1,25 @@
+{
+  "name": "websocket-drawing-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "实现一个基于 websocket 和 SVG/Canvas 的多人在线同步画图板",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leiquan/Websocket-Drawing-Board.git"
+  },
+  "author": "leiquan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/leiquan/Websocket-Drawing-Board/issues"
+  },
+  "homepage": "https://github.com/leiquan/Websocket-Drawing-Board#readme",
+  "dependencies": {
+    "express": "^4.13.4",
+    "socket.io": "^1.4.6"
+  }
+}

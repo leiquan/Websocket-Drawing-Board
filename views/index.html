@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Websocket Drawing Board</title>
+    <script src="lib/socket.io-1.4.5.js"></script>
+    <script src="lib/snap.svg-min.js"></script>
+    <script src="lib/Painter.js"></script>
+</head>
+
+<body>
+
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="500" height="500"></svg>
+
+<textarea id="content"></textarea>
+
+</body>
+
+<script>
+
+    var socket = io.connect(window.location.origin);
+
+    var content = document.getElementById('content');
+
+    var svg = document.getElementById('svg');
+
+
+//    var snap = Snap("#svg");
+//    var bigCircle = snap.circle(150, 150, 100);
+
+
+    content.onkeydown = function () {
+
+        console.log('send drawing data:');
+        console.log(content.value);
+        socket.emit('draw', {data: content.value});
+
+    }
+
+    socket.on('connect', function () {
+        console.log('Client conneced!');
+    });
+
+    socket.on('init', function (data) {
+        console.log(data);
+    });
+
+    socket.on('draw', function (data) {
+
+        console.log('received drawing data:');
+        console.log(data);
+
+        content.value = data.data;
+
+    });
+
+    var painter = new Painter('svg');
+
+    // painter.circle(30, 30, 40);
+    painter.circle({
+        cx: 30,
+        cy:30,
+        r:50
+    });
+
+    painter.ellipse({
+        cx: 60,
+        cy:80,
+        rx:50,
+        ry:70
+    });
+
+    painter.rect(200, 230, 80, 90);
+
+    painter.line(90, 120, 115, 195);
+
+    painter.text(90, 120, 'hello world');
+
+    console.log(painter);
+
+</script>
+
+</html>
