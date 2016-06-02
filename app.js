@@ -16,6 +16,9 @@ app.get('/lib/snap.svg-min.js', function (req, res) {
 app.get('/lib/Painter.js', function (req, res) {
     res.sendFile(__dirname + '/views/lib/Painter.js');
 });
+app.get('/css/style.css', function (req, res) {
+    res.sendFile(__dirname + '/views/css/style.css');
+});
 
 io.on('connection', function (socket) {
 

@@ -109,7 +109,7 @@ Painter.prototype.diff = function (action, element, keyValue) {
     // 如何 diff?
     // svg 由属性组成,遍历属性,找到变动
     // 当增删改差的时候调用 diff 即可,记录下 diff 的属性值
-    // action 直接记录修改行为,增删改差
+    // action 直接记录修改行为,增删改查
     var diff = null;
     if (action === 'add') {
         diff = {
