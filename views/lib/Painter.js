@@ -50,8 +50,6 @@ var Painter = function (svgId) {
             self.startX = e.clientX;
             self.startY = e.clientY;
 
-            console.log('offset X:' + self.offsetX + 'offect Y:' + self.offsetY);
-
             self.move(self.nowElement, self.offsetX, self.offsetY);
         }
 
@@ -115,7 +113,7 @@ Painter.prototype.diff = function () {
 }
 
 // 改变x 和 y,将对应的元素移动
-Painter.prototype.move = function (element, x, y) {
+Painter.prototype.move = function (element, offsetX, offsetY) {
 
     // 不是x 就是 cx, 不是 y 就是 cy
     var xAttr = null;
@@ -128,10 +126,10 @@ Painter.prototype.move = function (element, x, y) {
         yAttr = 'cy';
     }
 
-    var newX= parseInt(element.getAttribute('cx')) + parseInt(x);
+    var newX= parseInt(element.getAttribute('cx')) + parseInt(offsetX);
     element.setAttribute(xAttr, newX);
 
-    var newY= parseInt(element.getAttribute('cy')) + parseInt(y);
+    var newY= parseInt(element.getAttribute('cy')) + parseInt(offsetY);
     element.setAttribute(yAttr, newY);
 
 }
