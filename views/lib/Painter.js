@@ -13,11 +13,10 @@ var Painter = function (svgId) {
     this.startX = 0; // 拖动开始的时候,记录横坐标
     this.startY = 0; // 拖动开始的时候,记录纵坐标
 
-    this.endX = 0; // 拖动结束的时候,记录横坐标
-    this.endY = 0; // 拖动结束的时候,记录纵坐标
-
     this.offsetX = 0; // 拖动偏移横坐标
     this.offsetY = 0; // 拖动偏移纵坐标
+
+    this.onChangeListener = null;
 
     this.svg.addEventListener('mouseenter', function (e) {
         self.nowElement = self.svg;
@@ -42,15 +41,7 @@ var Painter = function (svgId) {
 
         // 这里主要主要的拖动操作
         if (self.draging) {
-
-            self.offsetX = e.clientX - self.startX;
-            self.offsetY = e.clientY - self.startY;
-
-            // 刷新起止点
-            self.startX = e.clientX;
-            self.startY = e.clientY;
-
-            self.move(self.nowElement, self.offsetX, self.offsetY);
+            self.move(self.nowElement, e.clientX, e.clientY);
         }
 
     }, false);
@@ -105,32 +96,101 @@ Painter.prototype.fill = function (shape, attr) {
     this.svg.appendChild(shape);
     this.elements.push(shape);
 
+    this.diff('add', shape);
+
+};
+
+Painter.prototype.setChangeListener = function (listener) {
+    this.onChangeListener = listener;
 };
 
 // 每次增删改差的时候调用,比较本次和上次的差异,方便增量更新
-Painter.prototype.diff = function () {
+Painter.prototype.diff = function (action, element, keyValue) {
+    // 如何 diff?
+    // svg 由属性组成,遍历属性,找到变动
+    // 当增删改差的时候调用 diff 即可,记录下 diff 的属性值
+    // action 直接记录修改行为,增删改差
+    var diff = null;
+    if (action === 'add') {
+        diff = {
+            action: action,
+            elementId: element.id,
+            data:element.outerHTML
+        };
+    } else if (action === 'modify') {
+        diff = {
+            action: action,
+            elementId: element.id,
+            data:keyValue
+        };
+    } else if (action === 'remove') {
+
+    }
+
+    if (this.onChangeListener) {
+        this.onChangeListener(diff);
+    }
 
 }
 
 // 改变x 和 y,将对应的元素移动
-Painter.prototype.move = function (element, offsetX, offsetY) {
+Painter.prototype.move = function (element, toX, toY) {
 
-    // 不是x 就是 cx, 不是 y 就是 cy
-    var xAttr = null;
-    var yAttr = null;
-    if (element.hasAttribute('x') && element.hasAttribute('x')) {
-        xAttr = 'x';
-        yAttr = 'y';
-    } else if (element.hasAttribute('cx') && element.hasAttribute('cy')) {
-        xAttr = 'cx';
-        yAttr = 'cy';
+    // 求 offset
+    this.offsetX = toX - this.startX;
+    this.offsetY = toY - this.startY;
+
+    // 刷新起止点
+    this.startX = toX;
+    this.startY = toY;
+
+    switch (this.nowElement.tagName) {
+        case 'ellipse':
+            var newX = parseInt(element.getAttribute('cx')) + parseInt(this.offsetX);
+            element.setAttribute('cx', newX);
+            var newY = parseInt(element.getAttribute('cy')) + parseInt(this.offsetY);
+            element.setAttribute('cy', newY);
+            this.diff('modify', this.nowElement, {cx: newX, cy: newY});
+            break;
+
+        case 'circle':
+            var newX = parseInt(element.getAttribute('cx')) + parseInt(this.offsetX);
+            element.setAttribute('cx', newX);
+            var newY = parseInt(element.getAttribute('cy')) + parseInt(this.offsetY);
+            element.setAttribute('cy', newY);
+            this.diff('modify', this.nowElement, {cx: newX, cy: newY});
+            break;
+
+        case 'rect':
+            var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
+            element.setAttribute('x', newX);
+            var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
+            element.setAttribute('y', newY);
+            this.diff('modify', this.nowElement, {x: newX, y: newY});
+            break;
+
+        case 'text':
+            var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
+            element.setAttribute('x', newX);
+            var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
+            element.setAttribute('y', newY);
+            this.diff('modify', this.nowElement, {x: newX, y: newY});
+            break;
+
+        case 'line':
+            var newX1 = parseInt(element.getAttribute('x1')) + parseInt(this.offsetX);
+            element.setAttribute('x1', newX1);
+            var newY1 = parseInt(element.getAttribute('y1')) + parseInt(this.offsetY);
+            element.setAttribute('y1', newY1);
+            var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
+            element.setAttribute('x2', newX2);
+            var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
+            element.setAttribute('y2', newY2);
+            this.diff('modify', this.nowElement, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
+            break;
+
     }
 
-    var newX= parseInt(element.getAttribute('cx')) + parseInt(offsetX);
-    element.setAttribute(xAttr, newX);
-
-    var newY= parseInt(element.getAttribute('cy')) + parseInt(offsetY);
-    element.setAttribute(yAttr, newY);
 
 }
 

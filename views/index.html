@@ -12,8 +12,6 @@
 222
 <svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="500" height="500" style="margin: 0;"></svg>
 
-<textarea id="content"></textarea>
-
 </body>
 
 <script>
@@ -23,19 +21,6 @@
     var content = document.getElementById('content');
 
     var svg = document.getElementById('svg');
-
-
-//    var snap = Snap("#svg");
-//    var bigCircle = snap.circle(150, 150, 100);
-
-
-    content.onkeydown = function () {
-
-        console.log('send drawing data:');
-        console.log(content.value);
-        socket.emit('draw', {data: content.value});
-
-    }
 
     socket.on('connect', function () {
         console.log('Client conneced!');
@@ -48,15 +33,18 @@
     socket.on('draw', function (data) {
 
         console.log('received drawing data:');
-        console.log(data);
+        console.log(data.data);
 
-        content.value = data.data;
+        if (data.data.action === 'add') {
+
+        } else if (data.data.action === 'modify') {
+            console.log(svg.elementId);
+        }
 
     });
 
     var painter = new Painter('svg');
 
-    // painter.circle(30, 30, 40);
     painter.circle({
         cx: 50,
         cy:50,
@@ -77,6 +65,12 @@
     painter.text(90, 120, 'hello world');
 
     console.log(painter);
+
+    painter.setChangeListener(function (diff) {
+        console.log('send drawing data:');
+        console.log(diff);
+        socket.emit('draw', {data: diff});
+    });
 
 </script>
 
