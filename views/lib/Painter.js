@@ -92,6 +92,7 @@ var Painter = function (svgId) {
         if (self.drawing == true) {
             self.drawing = false;
             console.log('新绘图结束');
+            self.tempDrawingShap = null;
         }
 
     }, false);
@@ -259,10 +260,8 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
             element.setAttribute('y2', newY2);
 
-            this.diff('modify', this.nowElement, {
-                x2: newX2,
-                y2: newY2
-            })
+            this.diff('modify', element, {x2: newX2, y2: newY2});
+
             break;
     }
 };

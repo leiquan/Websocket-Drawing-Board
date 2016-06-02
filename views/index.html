@@ -97,12 +97,15 @@
 
         } else if (data.data.action === 'modify') {
 
+            console.log(data);
+
 
             var ele = svg.getElementById(data.data.elementId.toString());
 
             for (var x in data.data.data) {
                 ele.setAttribute(x, data.data.data[x])
             }
+
 
         }
 
