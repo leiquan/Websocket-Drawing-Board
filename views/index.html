@@ -22,6 +22,7 @@
 
     var svg = document.getElementById('svg');
 
+
     socket.on('connect', function () {
         console.log('Client conneced!');
     });
@@ -32,13 +33,15 @@
 
     socket.on('draw', function (data) {
 
-        console.log('received drawing data:');
-        console.log(data.data);
-
         if (data.data.action === 'add') {
 
         } else if (data.data.action === 'modify') {
-            console.log(svg.elementId);
+            var ele = svg.getElementById(data.data.elementId.toString());
+
+            for (var x in data.data.data) {
+                ele.setAttribute(x, data.data.data[x])
+            }
+
         }
 
     });
@@ -67,8 +70,6 @@
     console.log(painter);
 
     painter.setChangeListener(function (diff) {
-        console.log('send drawing data:');
-        console.log(diff);
         socket.emit('draw', {data: diff});
     });
 
