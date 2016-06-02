@@ -14,11 +14,41 @@
 <svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
 
 <div class="tool-box">
-    <div class="item">缩放</div>
-    <div class="item">颜色</div>
-    <div class="item">画笔</div>
-    <div class="item">文字</div>
-    <div class="item">导出</div>
+    <div class="item">
+        <div class="menu">
+            <div class="child">200%</div>
+            <div class="child">100%</div>
+            <div class="child">50%</div>
+        </div>
+        缩放
+    </div>
+    <div class="item">
+        <div class="menu">
+            <div class="child">红</div>
+            <div class="child">绿</div>
+            <div class="child">蓝</div>
+        </div>
+        颜色
+    </div>
+    <div class="item">
+        <div class="menu">
+            <div class="child">直线</div>
+            <div class="child">矩形</div>
+            <div class="child">圆形</div>
+        </div>
+        画笔
+    </div>
+    <div class="item">
+        <div class="menu">
+            <div class="child">粗体</div>
+            <div class="child">斜体</div>
+            <div class="child">下划线</div>
+        </div>
+        文字
+    </div>
+    <div class="item">
+        导出
+    </div>
     <div class="item">清空</div>
 </div>
 
@@ -45,7 +75,29 @@
 
         if (data.data.action === 'add') {
 
+            console.log(data);
+
+            var shape = document.createElementNS('http://www.w3.org/2000/svg', data.data.data.tagName);
+            shape.id = data.data.elementId;
+
+            for (var i in data.data.data.attributes) {
+
+                if (i === 'innerHTML') {
+                    shape.innerHTML = data.data.data.attributes[i];
+                } else {
+                    shape.setAttribute(i, data.data.data.attributes[i]);
+                }
+            }
+
+            shape.setAttribute('fill', 'red');
+
+            svg.appendChild(shape);
+
+            painter.elements.push(shape);
+
         } else if (data.data.action === 'modify') {
+
+
             var ele = svg.getElementById(data.data.elementId.toString());
 
             for (var x in data.data.data) {

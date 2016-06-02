@@ -27,6 +27,7 @@
     margin-top: 5px;
     font-size: 14px;
     cursor: pointer;
+    position: relative;
 }
 
 #svg {
@@ -34,4 +35,23 @@
     margin: 0 auto;
     width: 500px;
     height: 500px;
+}
+
+.menu {
+    width: 50px;
+    height: 120px;
+    background-color: #ddd;
+    position: absolute;
+    top: -125px;
+    left: -5px;
+}
+
+.menu .child{
+    width: 50px;
+    height: 40px;
+    border-bottom: 1px solid gray;
+    box-sizing: border-box;
+}
+.menu :last-child{
+    border-bottom: none;
 }

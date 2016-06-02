@@ -8,13 +8,21 @@ var Painter = function (svgId) {
     this.nowColor = 'black'; // 当前选择的颜色
     this.nowWidth = '2'; // 当前选择的线条粗细
     this.nowElement = null; // 记录当前鼠标所在的元素
+    this.nowShape = 'line';
+    this.nowFontSize = '16px';
     this.draging = false; //鼠标是否正在拖动某个元素
+    this.drawing = false; // 是否正在绘画过程中
+    this.tempDrawingShap = null; // 缓存的正在绘画的图形的引用
 
-    this.startX = 0; // 拖动开始的时候,记录横坐标
-    this.startY = 0; // 拖动开始的时候,记录纵坐标
+    this.moveStartX = 0; // 拖动开始的时候,记录横坐标
+    this.moveStartY = 0; // 拖动开始的时候,记录纵坐标
 
-    this.offsetX = 0; // 拖动偏移横坐标
-    this.offsetY = 0; // 拖动偏移纵坐标
+    this.drawStartX = 0; // 绘画开始的坐标 X
+    this.drawStartY = 0; // 绘画开始的坐标 Y
+
+
+    this.offsetX = 0; // 鼠标偏移横坐标
+    this.offsetY = 0; // 鼠标偏移纵坐标
 
     this.onChangeListener = null;
 
@@ -44,6 +52,11 @@ var Painter = function (svgId) {
             self.move(self.nowElement, e.clientX, e.clientY);
         }
 
+        // 这里主要是绘图的操作
+        if (self.drawing) {
+            self.draw(self.drawStartX, self.drawStartY, e.clientX, e.clientY);
+        }
+
     }, false);
 
     this.svg.addEventListener('click', function (e) {
@@ -56,9 +69,15 @@ var Painter = function (svgId) {
         if (self.nowElement !== self.svg && e.target === self.nowElement) {
             self.draging = true;
             console.log('元素拖动开始');
-            self.startX = e.clientX;
-            self.startY = e.clientY;
+            self.moveStartX = e.clientX;
+            self.moveStartY = e.clientY;
+        } else {
+            console.log('这里要画一个新图');
+            self.drawing = true;
+            self.drawStartX = e.clientX;
+            self.drawStartY = e.clientY;
         }
+
     }, false);
 
     this.svg.addEventListener('mouseup', function (e) {
@@ -68,6 +87,11 @@ var Painter = function (svgId) {
             console.log('元素拖动结束');
             self.endX = e.clientX;
             self.endY = e.clientY;
+        }
+
+        if (self.drawing == true) {
+            self.drawing = false;
+            console.log('新绘图结束');
         }
 
     }, false);
@@ -98,6 +122,8 @@ Painter.prototype.fill = function (shape, attr) {
 
     this.diff('add', shape);
 
+    return shape;
+
 };
 
 Painter.prototype.setChangeListener = function (listener) {
@@ -112,16 +138,34 @@ Painter.prototype.diff = function (action, element, keyValue) {
     // action 直接记录修改行为,增删改查
     var diff = null;
     if (action === 'add') {
+
+        // 得到 attr 数组:
+        console.log(element);
+        var attr = {};
+
+
+        for (var x in element.attributes) {
+
+            if (element.attributes.hasOwnProperty(element.attributes[x].name)) {
+                attr[element.attributes[x].name] = element.attributes[x].nodeValue;
+            }
+
+        }
+
         diff = {
             action: action,
             elementId: element.id,
-            data:element.outerHTML
+            data: {
+                tagName: element.tagName,
+                attributes: attr
+
+            }
         };
     } else if (action === 'modify') {
         diff = {
             action: action,
             elementId: element.id,
-            data:keyValue
+            data: keyValue
         };
     } else if (action === 'remove') {
 
@@ -137,12 +181,12 @@ Painter.prototype.diff = function (action, element, keyValue) {
 Painter.prototype.move = function (element, toX, toY) {
 
     // 求 offset
-    this.offsetX = toX - this.startX;
-    this.offsetY = toY - this.startY;
+    this.offsetX = toX - this.moveStartX;
+    this.offsetY = toY - this.moveStartY;
 
     // 刷新起止点
-    this.startX = toX;
-    this.startY = toY;
+    this.moveStartX = toX;
+    this.moveStartY = toY;
 
     switch (this.nowElement.tagName) {
         case 'ellipse':
@@ -191,6 +235,50 @@ Painter.prototype.move = function (element, toX, toY) {
 
     }
 
+
+}
+
+// 刷新一个图形,注意,起点不变,只变终点,并且需要处理重点的映射关系
+Painter.prototype.fresh = function (element, clientX, clientY) {
+
+    // 求 offset
+    this.offsetX = clientX - this.drawStartX;
+    this.offsetY = clientY - this.drawStartY;
+
+    console.log(this.offsetX);
+    console.log(this.offsetY);
+
+    // 刷新起止点
+    this.drawStartX = clientX;
+    this.drawStartY = clientY;
+
+    switch (element.tagName) {
+        case 'line':
+            var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
+            element.setAttribute('x2', newX2);
+            var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
+            element.setAttribute('y2', newY2);
+
+            this.diff('modify', this.nowElement, {
+                x2: newX2,
+                y2: newY2
+            })
+            break;
+    }
+};
+
+// 不同的图形,在处理上并不一样,并且这里只要一个图形的 instance
+Painter.prototype.draw = function (startX, startY, clientX, clientY) {
+
+    // 线段,直接看做起点和终点
+    if (this.nowShape == 'line') {
+        if (!this.tempDrawingShap) {
+            this.tempDrawingShap = this.line(startX, startY, clientX, clientY);
+        } else {
+            console.log('不在重绘');
+            this.fresh(this.tempDrawingShap, clientX, clientY);
+        }
+    }
 
 }
 
@@ -244,7 +332,8 @@ Painter.prototype.line = function (x1, y1, x2, y2) {
     attr.stroke = this.nowColor;
     attr.strokeWidth = this.nowWidth;
 
-    this.fill('line', attr);
+    var shape = this.fill('line', attr);
+    return shape;
 };
 
 Painter.prototype.text = function (x, y, text) {
