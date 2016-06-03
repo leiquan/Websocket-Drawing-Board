@@ -8,32 +8,33 @@ var Painter = function (svgId) {
     this.nowColor = 'black'; // 当前选择的颜色
     this.nowWidth = '2'; // 当前选择的线条粗细
     this.nowElement = null; // 记录当前鼠标所在的元素
-    this.nowShape = 'line';
+    this.nowShape = 'rect';
     this.nowFontSize = '16px';
     this.draging = false; //鼠标是否正在拖动某个元素
     this.drawing = false; // 是否正在绘画过程中
     this.tempDrawingShap = null; // 缓存的正在绘画的图形的引用
 
-    this.moveStartX = 0; // 拖动开始的时候,记录横坐标
-    this.moveStartY = 0; // 拖动开始的时候,记录纵坐标
+    // 拖动开始的时候,记录坐标,并且此坐标随着鼠标移动而变动,用来记录每次移动的 offset
+    this.moveStartX = 0;
+    this.moveStartY = 0;
 
-    this.drawStartX = 0; // 绘画开始的坐标 X
-    this.drawStartY = 0; // 绘画开始的坐标 Y
+    // 绘图开始的时候,记录坐标,并且此坐标不会随着拖动而变动
+    this.drawStartX = 0;
+    this.drawStartY = 0;
 
 
-    this.offsetX = 0; // 鼠标偏移横坐标
-    this.offsetY = 0; // 鼠标偏移纵坐标
+    // 鼠标移动过程中的偏移坐标
+    this.offsetX = 0;
+    this.offsetY = 0;
 
     this.onChangeListener = null;
 
     this.svg.addEventListener('mouseenter', function (e) {
         self.nowElement = self.svg;
-        console.log(e);
     }, false);
 
     this.svg.addEventListener('mouseleave', function (e) {
         e.target.style.cursor = 'default';
-        console.log(e);
     }, false);
 
     this.svg.addEventListener('mousemove', function (e) {
@@ -61,18 +62,17 @@ var Painter = function (svgId) {
 
     this.svg.addEventListener('click', function (e) {
         if (e.target === self.nowElement) {
-            console.log(self.nowElement);
         }
     }, false);
 
     this.svg.addEventListener('mousedown', function (e) {
+
+        self.moveStartX = e.clientX;
+        self.moveStartY = e.clientY;
+
         if (self.nowElement !== self.svg && e.target === self.nowElement) {
             self.draging = true;
-            console.log('元素拖动开始');
-            self.moveStartX = e.clientX;
-            self.moveStartY = e.clientY;
         } else {
-            console.log('这里要画一个新图');
             self.drawing = true;
             self.drawStartX = e.clientX;
             self.drawStartY = e.clientY;
@@ -84,20 +84,27 @@ var Painter = function (svgId) {
 
         if (self.draging) {
             self.draging = false;
-            console.log('元素拖动结束');
-            self.endX = e.clientX;
-            self.endY = e.clientY;
         }
 
         if (self.drawing == true) {
             self.drawing = false;
-            console.log('新绘图结束');
             self.tempDrawingShap = null;
         }
 
     }, false);
 
 };
+
+
+// 计算两坐标点之间的直线距离
+Painter.prototype.distance = function (x1, y1, x2, y2) {
+
+    var calX = x2 - x1;
+    var calY = y2 - y1;
+
+    return Math.pow((calX * calX + calY * calY), 0.5);
+
+}
 
 // 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引
 Painter.prototype.fill = function (shape, attr) {
@@ -127,6 +134,7 @@ Painter.prototype.fill = function (shape, attr) {
 
 };
 
+// 设置改动的监听器,当图形有变化的时候,会把 diff 传进去
 Painter.prototype.setChangeListener = function (listener) {
     this.onChangeListener = listener;
 };
@@ -141,9 +149,7 @@ Painter.prototype.diff = function (action, element, keyValue) {
     if (action === 'add') {
 
         // 得到 attr 数组:
-        console.log(element);
         var attr = {};
-
 
         for (var x in element.attributes) {
 
@@ -162,6 +168,7 @@ Painter.prototype.diff = function (action, element, keyValue) {
 
             }
         };
+
     } else if (action === 'modify') {
         diff = {
             action: action,
@@ -242,46 +249,90 @@ Painter.prototype.move = function (element, toX, toY) {
 // 刷新一个图形,注意,起点不变,只变终点,并且需要处理重点的映射关系
 Painter.prototype.fresh = function (element, clientX, clientY) {
 
-    // 求 offset
-    this.offsetX = clientX - this.drawStartX;
-    this.offsetY = clientY - this.drawStartY;
-
-    console.log(this.offsetX);
-    console.log(this.offsetY);
-
     // 刷新起止点
-    this.drawStartX = clientX;
-    this.drawStartY = clientY;
+    this.moveStartX = clientX;
+    this.moveStartY = clientY;
 
     switch (element.tagName) {
+
         case 'line':
-            var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
+
+            var newX2 = parseInt(element.getAttribute('x2'))  + parseInt(this.offsetX);
             element.setAttribute('x2', newX2);
-            var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
+            var newY2 = parseInt(element.getAttribute('y2'))  + parseInt(this.offsetY);
             element.setAttribute('y2', newY2);
 
             this.diff('modify', element, {x2: newX2, y2: newY2});
 
             break;
+
+        case 'rect':
+            // TODO:注意一点,如果为负数,那么需要更换顶点坐标哈哈
+
+            var newWidth = Math.abs(parseInt(element.getAttribute('x')) + parseInt(this.offsetX) - this.moveStartX);
+            element.setAttribute('width', newWidth);
+            var newHeight = Math.abs(parseInt(element.getAttribute('y')) + parseInt(this.offsetY) - this.moveStartY);
+            element.setAttribute('height', newHeight);
+
+            this.diff('modify', element, {width: newWidth, height: newHeight});
+
+            break;
+
+        case 'circle':
+            // 求半径 r
+            var newR = this.distance(this.drawStartX, this.drawStartY, clientX, clientY);
+            element.setAttribute('r', newR);
+            this.diff('modify', element, {r: newR});
+
+            break;
+
+
     }
 };
 
 // 不同的图形,在处理上并不一样,并且这里只要一个图形的 instance
 Painter.prototype.draw = function (startX, startY, clientX, clientY) {
 
+    console.log('开始 draw!');
+
+    // 求 offset
+    this.offsetX = clientX - this.drawStartX;
+    this.offsetY = clientY - this.drawStartY;
+
+    console.log('起点坐标: ' + this.drawStartX + ':' + this.drawStartY);
+    console.log(this.offsetX + ':' + this.offsetY);
+
+
     // 线段,直接看做起点和终点
     if (this.nowShape == 'line') {
+
+         // line 的增量是变化的,每一次移动都在变
+        this.offsetX = clientX - this.moveStartX;
+        this.offsetY = clientY - this.moveStartY;
+
         if (!this.tempDrawingShap) {
-            this.tempDrawingShap = this.line(startX, startY, clientX, clientY);
+            this.tempDrawingShap = this.line(startX, startY, startX, startY);
         } else {
-            console.log('不在重绘');
+            this.fresh(this.tempDrawingShap, clientX, clientY);
+        }
+    } else if (this.nowShape == 'rect') {
+        console.log('rect');
+        if (!this.tempDrawingShap) {
+            this.tempDrawingShap = this.rect(startX, startY, 0, 0);
+        } else {
+            this.fresh(this.tempDrawingShap, clientX, clientY);
+        }
+    } else if (this.nowShape == 'circle') {
+        if (!this.tempDrawingShap) {
+            this.tempDrawingShap = this.circle(startX - this.offsetX, startY - this.offsetY, 0);
+        } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
     }
 
 }
 
-
+// 清除鼠标
 Painter.prototype.clearMouse = function () {
     for (var x in this.elements) {
         this.elements[x].style.cursor = 'default';
@@ -312,7 +363,8 @@ Painter.prototype.attr = function () {
 
 Painter.prototype.circle = function (cx, cy, r) {
     var attr = this.attr('cx', 'cy', 'r', arguments);
-    this.fill('circle', attr);
+    var shape = this.fill('circle', attr);
+    return shape;
 };
 
 Painter.prototype.ellipse = function (cx, cy, rx, ry) {
@@ -322,7 +374,8 @@ Painter.prototype.ellipse = function (cx, cy, rx, ry) {
 
 Painter.prototype.rect = function (x, y, width, height) {
     var attr = this.attr('x', 'y', 'width', 'height', arguments);
-    this.fill('rect', attr);
+    var shape = this.fill('rect', attr);
+    return shape;
 };
 
 Painter.prototype.line = function (x1, y1, x2, y2) {
