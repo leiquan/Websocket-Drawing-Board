@@ -396,3 +396,6 @@ Painter.prototype.text = function (x, y, text) {
 
     this.fill('text', attr);
 };
+
+var msg = 'hello world';
+console.log(msg);
