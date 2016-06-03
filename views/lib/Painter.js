@@ -8,7 +8,7 @@ var Painter = function (svgId) {
     this.nowColor = 'black'; // 当前选择的颜色
     this.nowWidth = '2'; // 当前选择的线条粗细
     this.nowElement = null; // 记录当前鼠标所在的元素
-    this.nowShape = 'rect';
+    this.nowShape = 'ellipse';
     this.nowFontSize = '16px';
     this.draging = false; //鼠标是否正在拖动某个元素
     this.drawing = false; // 是否正在绘画过程中
@@ -43,7 +43,7 @@ var Painter = function (svgId) {
         self.clearMouse();
 
         // 设置鼠标样式
-        if (e.target !== self.svg) {
+        if (e.target !== self.svg && !self.draging) {
             self.nowElement = e.target;
             self.nowElement.style.cursor = 'move';
         }
@@ -257,35 +257,35 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
 
         case 'line':
 
-            var newX2 = parseInt(element.getAttribute('x2'))  + parseInt(this.offsetX);
+            var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
             element.setAttribute('x2', newX2);
-            var newY2 = parseInt(element.getAttribute('y2'))  + parseInt(this.offsetY);
+            var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
             element.setAttribute('y2', newY2);
-
             this.diff('modify', element, {x2: newX2, y2: newY2});
-
             break;
 
         case 'rect':
             // TODO:注意一点,如果为负数,那么需要更换顶点坐标哈哈
-
-            var newWidth = Math.abs(parseInt(element.getAttribute('x')) + parseInt(this.offsetX) - this.moveStartX);
+            var newWidth = Math.abs(parseInt(element.getAttribute('x')) + this.offsetX - this.drawStartX);
             element.setAttribute('width', newWidth);
-            var newHeight = Math.abs(parseInt(element.getAttribute('y')) + parseInt(this.offsetY) - this.moveStartY);
+            var newHeight = Math.abs(parseInt(element.getAttribute('y')) + this.offsetY - this.drawStartY);
             element.setAttribute('height', newHeight);
-
             this.diff('modify', element, {width: newWidth, height: newHeight});
-
             break;
 
         case 'circle':
-            // 求半径 r
             var newR = this.distance(this.drawStartX, this.drawStartY, clientX, clientY);
             element.setAttribute('r', newR);
             this.diff('modify', element, {r: newR});
-
             break;
 
+        case 'ellipse':
+            var newWidth = Math.abs(parseInt(element.getAttribute('cx')) + this.offsetX - this.drawStartX);
+            element.setAttribute('rx', newWidth);
+            var newHeight = Math.abs(parseInt(element.getAttribute('cy')) + this.offsetY - this.drawStartY);
+            element.setAttribute('ry', newHeight);
+            this.diff('modify', element, {rx: newWidth, ry: newHeight});
+            break;
 
     }
 };
@@ -300,13 +300,13 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
     this.offsetY = clientY - this.drawStartY;
 
     console.log('起点坐标: ' + this.drawStartX + ':' + this.drawStartY);
-    console.log(this.offsetX + ':' + this.offsetY);
+    console.log('offset：' + this.offsetX + ':' + this.offsetY);
 
 
     // 线段,直接看做起点和终点
     if (this.nowShape == 'line') {
 
-         // line 的增量是变化的,每一次移动都在变
+        // line 的增量是变化的,每一次移动都在变
         this.offsetX = clientX - this.moveStartX;
         this.offsetY = clientY - this.moveStartY;
 
@@ -316,7 +316,7 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
     } else if (this.nowShape == 'rect') {
-        console.log('rect');
+
         if (!this.tempDrawingShap) {
             this.tempDrawingShap = this.rect(startX, startY, 0, 0);
         } else {
@@ -325,6 +325,13 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
     } else if (this.nowShape == 'circle') {
         if (!this.tempDrawingShap) {
             this.tempDrawingShap = this.circle(startX - this.offsetX, startY - this.offsetY, 0);
+        } else {
+            this.fresh(this.tempDrawingShap, clientX, clientY);
+        }
+    } else if (this.nowShape == 'ellipse') {
+
+        if (!this.tempDrawingShap) {
+            this.tempDrawingShap = this.ellipse(startX, startY, 0, 0);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
@@ -369,7 +376,8 @@ Painter.prototype.circle = function (cx, cy, r) {
 
 Painter.prototype.ellipse = function (cx, cy, rx, ry) {
     var attr = this.attr('cx', 'cy', 'rx', 'ry', arguments);
-    this.fill('ellipse', attr);
+    var shape = this.fill('ellipse', attr);
+    return shape;
 };
 
 Painter.prototype.rect = function (x, y, width, height) {
@@ -396,6 +404,3 @@ Painter.prototype.text = function (x, y, text) {
 
     this.fill('text', attr);
 };
-
-var msg = 'hello world';
-console.log(msg);

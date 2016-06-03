@@ -9,4 +9,5 @@ gen
 node_modules
 Snap.svg-0.4.1
 .vscode
+jsconfig.json
 # Created by .ignore support plugin (hsz.mobi)
