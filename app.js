@@ -27,12 +27,11 @@ io.on('connection', function (socket) {
     socket.emit('init', {userid: Math.random() * 1000});
 
     socket.on('draw', function (data) {
-
-        console.log('收到绘画数据:');
-        console.log(data);
-
         socket.broadcast.emit('draw', data);
+    });
 
+    socket.on('config', function (data) {
+        socket.broadcast.emit('config', data);
     });
 
 });

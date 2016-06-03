@@ -293,15 +293,9 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
 // 不同的图形,在处理上并不一样,并且这里只要一个图形的 instance
 Painter.prototype.draw = function (startX, startY, clientX, clientY) {
 
-    console.log('开始 draw!');
-
     // 求 offset
     this.offsetX = clientX - this.drawStartX;
     this.offsetY = clientY - this.drawStartY;
-
-    console.log('起点坐标: ' + this.drawStartX + ':' + this.drawStartY);
-    console.log('offset：' + this.offsetX + ':' + this.offsetY);
-
 
     // 线段,直接看做起点和终点
     if (this.nowShape == 'line') {

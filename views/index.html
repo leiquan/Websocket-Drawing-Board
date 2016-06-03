@@ -81,15 +81,16 @@
         console.log('Client conneced!');
     });
 
-    socket.on('init', function (data) {
+    socket.on('config', function (data) {
         console.log(data);
-    });
+        for (x in data) {
+            painter[x] = data[x];
+        }
+    }, false);
 
     socket.on('draw', function (data) {
 
         if (data.data.action === 'add') {
-
-            console.log(data);
 
             var shape = document.createElementNS('http://www.w3.org/2000/svg', data.data.data.tagName);
             shape.id = data.data.elementId;
@@ -103,7 +104,7 @@
                 }
             }
 
-            shape.setAttribute('fill', 'red');
+            shape.setAttribute('fill', painter.nowColor);
 
             svg.appendChild(shape);
 
@@ -139,6 +140,7 @@
     colorSelector.addEventListener('click', function (e) {
         if (e.target.className == 'child') {
             painter.nowColor = e.target.id;
+            socket.emit('config', {nowColor: e.target.id});
         }
     }, false);
 
