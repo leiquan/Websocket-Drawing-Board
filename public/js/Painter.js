@@ -358,12 +358,12 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
         this.offsetX = clientX - this.moveStartX;
         this.offsetY = clientY - this.moveStartY;
 
-        console.log('记录偏移量');
-
         if (!this.tempDrawingShap) {
+            console.log('新建');
             this.tempDrawingShap = this.path(startX, startY, 0, 0);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
+            console.log('刷新');
         }
 
     }
@@ -463,7 +463,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         // 数据拼接
         var tempStr = '';
         var id = this.nowId;
-        this.nowId ++;
+        this.nowId++;
         var data = {};
         data.id = id;
         data.d = [];
@@ -473,7 +473,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         tempStr += ' m ' + x + ' ' + y;
         tempStr += ' l ' + toX + ' ' + toY;
 
-        var shape = this.fill('path', {d: tempStr, stroke: "blue", strokeWidth: "3"}, id);
+        var shape = this.fill('path', {d: tempStr, stroke: this.nowColor, strokeWidth: this.nowWidth}, id);
         return shape;
 
     }

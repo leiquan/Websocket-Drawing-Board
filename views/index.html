@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Websocket Drawing Board</title>
     <script src="js/socket.io-1.4.5.js"></script>
-    <script src="js/snap.svg-min.js"></script>
     <script src="js/Painter.js"></script>
     <link href="css/style.css" rel="stylesheet">
 </head>
@@ -33,6 +32,7 @@
     </div>
     <div class="item">
         <div class="menu" id="shape-selector">
+            <div class="child" id="path">路径</div>
             <div class="child" id="line">直线</div>
             <div class="child" id="rect">矩形</div>
             <div class="child" id="circle">圆形</div>
@@ -143,9 +143,6 @@
             socket.emit('config', {nowColor: e.target.id});
         }
     }, false);
-
-    var path = painter.path(10, 20, 30, 40);
-    painter.path(0, 0, 40, 70,  path);
 
 </script>
 
