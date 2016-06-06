@@ -4,7 +4,7 @@ var Painter = function (svgId) {
 
     this.svg = document.getElementById(svgId); // svg 元素
     this.elements = []; // SVG 包含的所有元素,在元素添加时加入数组,删除时移出数组
-    this.nowId = 0; // id 累加器,为每个元素赋值唯一的 id
+    this.nowId = 1; // id 累加器,为每个元素赋值唯一的 id
     this.nowColor = 'black'; // 当前选择的颜色
     this.nowWidth = '2'; // 当前选择的线条粗细
     this.nowElement = null; // 记录当前鼠标所在的元素
@@ -115,13 +115,11 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 
 // 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引
 Painter.prototype.fill = function (shape, attr, id) {
-
-    var id;
-    if (!id) {
+    if (id) {
+        id = id;
+    } else {
         this.nowId++;
         id = this.nowId;
-    } else {
-        id = id;
     }
 
 
@@ -359,11 +357,10 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
         this.offsetY = clientY - this.moveStartY;
 
         if (!this.tempDrawingShap) {
-            console.log('新建');
             this.tempDrawingShap = this.path(startX, startY, 0, 0);
+            console.log(this.tempDrawingShap);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
-            console.log('刷新');
         }
 
     }
@@ -442,9 +439,15 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
     // 这里是刷新已存在的 path,可能是持续画笔,可能是移动
     if (path) {
+
         // 遍历寻找 id,然后刷新 id 对应的数据
         for (var i = 0; i < this.pathArr.length; i++) {
+
+            console.log(this.pathArr[i].id);
+            console.log(path.id);
+
             if (this.pathArr[i].id == path.id) {
+                console.log('进入到了这里');
                 this.pathArr[i].d.push({mx: x, my: y, lx: toX, ly: toY});
 
                 var d = path.getAttribute('d');
@@ -452,7 +455,6 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
                 d += ' l ' + toX + ' ' + toY;
 
                 path.setAttribute('d', d);
-
 
             }
         }
@@ -463,7 +465,6 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         // 数据拼接
         var tempStr = '';
         var id = this.nowId;
-        this.nowId++;
         var data = {};
         data.id = id;
         data.d = [];
@@ -474,6 +475,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         tempStr += ' l ' + toX + ' ' + toY;
 
         var shape = this.fill('path', {d: tempStr, stroke: this.nowColor, strokeWidth: this.nowWidth}, id);
+        this.nowId++;
         return shape;
 
     }
