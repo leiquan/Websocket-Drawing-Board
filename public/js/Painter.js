@@ -5,8 +5,8 @@ var Painter = function (svgId) {
     this.svg = document.getElementById(svgId); // svg 元素
     this.elements = []; // SVG 包含的所有元素,在元素添加时加入数组,删除时移出数组
     this.nowId = 1; // id 累加器,为每个元素赋值唯一的 id
-    this.nowColor = 'black'; // 当前选择的颜色
-    this.nowWidth = '2'; // 当前选择的线条粗细
+    this.nowColor = 'green'; // 当前选择的颜色
+    this.nowWidth = '10'; // 当前选择的线条粗细
     this.nowElement = null; // 记录当前鼠标所在的元素
     this.nowShape = 'path';
     this.nowFontSize = '16px';
@@ -443,11 +443,8 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         // 遍历寻找 id,然后刷新 id 对应的数据
         for (var i = 0; i < this.pathArr.length; i++) {
 
-            console.log(this.pathArr[i].id);
-            console.log(path.id);
-
             if (this.pathArr[i].id == path.id) {
-                console.log('进入到了这里');
+
                 this.pathArr[i].d.push({mx: x, my: y, lx: toX, ly: toY});
 
                 var d = path.getAttribute('d');
@@ -455,6 +452,8 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
                 d += ' l ' + toX + ' ' + toY;
 
                 path.setAttribute('d', d);
+
+                this.diff('modify', path, {mx: x, my: y, lx: toX, ly: toY});
 
             }
         }
@@ -479,8 +478,5 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         return shape;
 
     }
-
-
-    //return shape;
 
 };

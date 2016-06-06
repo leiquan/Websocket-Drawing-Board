@@ -33,6 +33,7 @@
     <div class="item">
         <div class="menu" id="shape-selector">
             <div class="child" id="path">路径</div>
+            <div class="child" id="text">文字</div>
             <div class="child" id="line">直线</div>
             <div class="child" id="rect">矩形</div>
             <div class="child" id="circle">圆形</div>
@@ -82,13 +83,14 @@
     });
 
     socket.on('config', function (data) {
-        console.log(data);
         for (x in data) {
             painter[x] = data[x];
         }
     }, false);
 
     socket.on('draw', function (data) {
+
+        console.log(data);
 
         if (data.data.action === 'add') {
 
@@ -114,10 +116,19 @@
 
             var ele = svg.getElementById(data.data.elementId.toString());
 
-            for (var x in data.data.data) {
-                ele.setAttribute(x, data.data.data[x])
-            }
+            if (ele.tagName == 'path') {
 
+                var d = ele.getAttribute('d');
+
+                d += ' m ' + data.data.data.mx + ' ' + data.data.data.my;
+                d += ' l ' + data.data.data.lx + ' ' + data.data.data.ly;
+
+                ele.setAttribute('d', d);
+            } else {
+                for (var x in data.data.data) {
+                    ele.setAttribute(x, data.data.data[x])
+                }
+            }
 
         }
 
