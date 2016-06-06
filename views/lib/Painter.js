@@ -8,7 +8,7 @@ var Painter = function (svgId) {
     this.nowColor = 'black'; // 当前选择的颜色
     this.nowWidth = '2'; // 当前选择的线条粗细
     this.nowElement = null; // 记录当前鼠标所在的元素
-    this.nowShape = 'ellipse';
+    this.nowShape = 'path';
     this.nowFontSize = '16px';
     this.draging = false; //鼠标是否正在拖动某个元素
     this.drawing = false; // 是否正在绘画过程中
@@ -26,6 +26,11 @@ var Painter = function (svgId) {
     // 鼠标移动过程中的偏移坐标
     this.offsetX = 0;
     this.offsetY = 0;
+
+    // 本对象存储所有的 path
+    // 数据结构:
+    // [{id: '', d:[{mx:0,my:0,lx:0,ly:0}]}]
+    this.pathArr = [];
 
     this.onChangeListener = null;
 
@@ -74,6 +79,7 @@ var Painter = function (svgId) {
             self.draging = true;
         } else {
             self.drawing = true;
+            console.log('开始画图');
             self.drawStartX = e.clientX;
             self.drawStartY = e.clientY;
         }
@@ -88,6 +94,7 @@ var Painter = function (svgId) {
 
         if (self.drawing == true) {
             self.drawing = false;
+            console.log('结束画图');
             self.tempDrawingShap = null;
         }
 
@@ -107,12 +114,19 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 }
 
 // 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引
-Painter.prototype.fill = function (shape, attr) {
+Painter.prototype.fill = function (shape, attr, id) {
 
-    this.nowId++;
+    var id;
+    if (!id) {
+        this.nowId++;
+        id = this.nowId;
+    } else {
+        id = id;
+    }
+
 
     var shape = document.createElementNS('http://www.w3.org/2000/svg', shape);
-    shape.id = this.nowId;
+    shape.id = id;
 
     for (var i in attr) {
 
@@ -241,6 +255,11 @@ Painter.prototype.move = function (element, toX, toY) {
             this.diff('modify', this.nowElement, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
             break;
 
+        // path 的移动比较特殊,无法调用 xy 来移动,需要重新绘制图形
+        case 'path':
+            console.log('path 的移动比较特殊,无法调用 xy 来移动,需要重新绘制图形');
+            break;
+
     }
 
 
@@ -287,6 +306,11 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             this.diff('modify', element, {rx: newWidth, ry: newHeight});
             break;
 
+        case 'path':
+            // 这里需要求偏移量
+            this.path(0, 0, this.offsetX, this.offsetY, element);
+            break;
+
     }
 };
 
@@ -329,6 +353,19 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
+    } else if (this.nowShape == 'path') {
+        // path 同 line
+        this.offsetX = clientX - this.moveStartX;
+        this.offsetY = clientY - this.moveStartY;
+
+        console.log('记录偏移量');
+
+        if (!this.tempDrawingShap) {
+            this.tempDrawingShap = this.path(startX, startY, 0, 0);
+        } else {
+            this.fresh(this.tempDrawingShap, clientX, clientY);
+        }
+
     }
 
 }
@@ -396,5 +433,52 @@ Painter.prototype.text = function (x, y, text) {
     attr.stroke = this.nowColor;
     attr.strokeWidth = this.nowWidth;
 
-    this.fill('text', attr);
+    var shape = this.fill('text', attr);
+    return shape;
+};
+
+// path 比较特殊,只有一个 d 属性,那么其属性需要存储为数组,然后由数组来渲染
+Painter.prototype.path = function (x, y, toX, toY, path) {
+
+    // 这里是刷新已存在的 path,可能是持续画笔,可能是移动
+    if (path) {
+        // 遍历寻找 id,然后刷新 id 对应的数据
+        for (var i = 0; i < this.pathArr.length; i++) {
+            if (this.pathArr[i].id == path.id) {
+                this.pathArr[i].d.push({mx: x, my: y, lx: toX, ly: toY});
+
+                var d = path.getAttribute('d');
+                d += ' m ' + x + ' ' + y;
+                d += ' l ' + toX + ' ' + toY;
+
+                path.setAttribute('d', d);
+
+
+            }
+        }
+
+    }
+    // 新建
+    else {
+        // 数据拼接
+        var tempStr = '';
+        var id = this.nowId;
+        this.nowId ++;
+        var data = {};
+        data.id = id;
+        data.d = [];
+        data.d.push({mx: x, my: y, lx: toX, ly: toY});
+        this.pathArr.push(data);
+
+        tempStr += ' m ' + x + ' ' + y;
+        tempStr += ' l ' + toX + ' ' + toY;
+
+        var shape = this.fill('path', {d: tempStr, stroke: "blue", strokeWidth: "3"}, id);
+        return shape;
+
+    }
+
+
+    //return shape;
+
 };
