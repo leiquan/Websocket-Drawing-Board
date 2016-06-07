@@ -538,18 +538,6 @@ Painter.prototype.saveAsFile = function () {
 
     imgData = imgData.replace('image/svg', 'image/octet-stream');
 
-    var saveFile = function (data, filename) {
-
-        var saveLink = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
-        saveLink.href = data;
-        saveLink.download = filename;
-
-        var event = document.createEvent('MouseEvents');
-        event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-        saveLink.dispatchEvent(event);
-
-    };
-
     var date = new Date();
     var year = date.getFullYear();
     var month = date.getMonth() + 1 > 9 ? date.getMonth() + 1 : '0' + (date.getMonth() + 1);
@@ -560,5 +548,12 @@ Painter.prototype.saveAsFile = function () {
 
     var filename = 'Websocket_drawing_board_image_' + year + month + day + hour + minute + second + '.svg';
 
-    saveFile(imgData, filename);
+    var saveLink = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+    saveLink.href = imgData;
+    saveLink.download = filename;
+
+    var event = document.createEvent('MouseEvents');
+    event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    saveLink.dispatchEvent(event);
+
 }
