@@ -32,7 +32,7 @@
     </div>
     <div class="item">
         <div class="menu" id="shape-selector">
-            <div class="child" id="path">路径</div>
+            <div class="child" id="path">签名</div>
             <div class="child" id="text">文字</div>
             <div class="child" id="line">直线</div>
             <div class="child" id="rect">矩形</div>
@@ -58,7 +58,7 @@
     </div>
     <div class="item">
         <div class="menu">
-            <div class="child">文件</div>
+            <div class="child" id="file">文件</div>
             <div class="child">剪贴板</div>
             <div class="child">URL</div>
         </div>
@@ -75,7 +75,6 @@
     var content = document.getElementById('content');
 
     var svg = document.getElementById('svg');
-
 
     socket.on('connect', function () {
         console.log('Client conneced!Clear board!');
@@ -126,6 +125,18 @@
         painter.shape = 'path';
         socket.emit('config', {color: '#eee'});
     }, false);
+
+    var clear = document.getElementById('clear');
+    clear.addEventListener('click', function () {
+        painter.clear();
+        socket.emit('clear');
+    }, false);
+
+    var file = document.getElementById('file');
+    file.addEventListener('click', function () {
+        painter.saveAsFile();
+    }, false);
+
 
 </script>
 
