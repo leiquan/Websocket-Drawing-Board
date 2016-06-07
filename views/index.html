@@ -51,9 +51,8 @@
     </div>
     <div class="item">
         <div class="menu">
-            <div class="child">橡皮擦</div>
-            <div class="child">删除图形</div>
-            <div class="child">清空画布</div>
+            <div class="child" id="eraser">橡皮擦</div>
+            <div class="child" id="clear">清空画布</div>
         </div>
         擦除
     </div>
@@ -80,7 +79,7 @@
 
     socket.on('connect', function () {
         console.log('Client conneced!Clear board!');
-        socket.emit('clear');
+        socket.emit('clear');// 这里是一个模拟的过程,实际不会发生 connect 就清除的情况
     });
 
     socket.on('clear', function () {
@@ -119,6 +118,13 @@
             painter.color = e.target.id;
             socket.emit('config', {color: e.target.id});
         }
+    }, false);
+
+    var eraser = document.getElementById('eraser');
+    eraser.addEventListener('click', function (e) {
+        painter.color = '#eee';
+        painter.shape = 'path';
+        socket.emit('config', {color: '#eee'});
     }, false);
 
 </script>
