@@ -32,4 +32,8 @@ io.on('connection', function (socket) {
         socket.broadcast.emit('config', data);
     });
 
+    socket.on('clear', function () {
+        socket.broadcast.emit('clear');
+    });
+
 });

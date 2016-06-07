@@ -79,15 +79,19 @@
 
 
     socket.on('connect', function () {
-        console.log('Client conneced!');
+        console.log('Client conneced!Clear board!');
+        socket.emit('clear');
     });
+
+    socket.on('clear', function () {
+        console.log('这里要清除画布哦');
+        painter.clear();
+    }, false);
 
     socket.on('config', function (data) {
         for (x in data) {
             painter[x] = data[x];
         }
-        console.log('config data:');
-        console.log(data);
     }, false);
 
     socket.on('draw', function (diff) {

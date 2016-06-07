@@ -480,7 +480,7 @@ Painter.prototype.drawDiff = function (diff) {
         shape.setAttribute('fill', this.color);
 
         svg.appendChild(shape);
-        this.nowId ++;
+        this.nowId++;
 
         this.elements.push(shape);
 
@@ -504,12 +504,30 @@ Painter.prototype.drawDiff = function (diff) {
                 ele.setAttribute(x, diff.data[x])
             }
             ele.setAttribute('stroke-width', this.width);
-        } else  {
+        } else {
             for (var x in diff.data) {
-            ele.setAttribute(x, diff.data[x])
+                ele.setAttribute(x, diff.data[x])
+            }
         }
-    }
 
     }
+
+}
+
+// clear 这个方法用来清空全部图形,主要用来橡皮擦的全部删除,以及在网页调试的时候的刷新后调用
+Painter.prototype.clear = function () {
+    console.log('这里已经执行了 clear');
+    // 1.清除已经绘画的全部元素
+    // 2.将缓存的数组和状态复位
+    while (svg.hasChildNodes()) {
+        svg.removeChild(svg.firstChild);
+    }
+
+    this.elements = [];
+    this.nowId = 1;
+    this.pathArr = [];
+    this.draging = false;
+    this.drawing = false;
+    this.tempDrawingShap = null;
 
 }
