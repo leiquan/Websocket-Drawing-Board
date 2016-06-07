@@ -5,11 +5,13 @@ var Painter = function (svgId) {
     this.svg = document.getElementById(svgId); // svg 元素
     this.elements = []; // SVG 包含的所有元素,在元素添加时加入数组,删除时移出数组
     this.nowId = 1; // id 累加器,为每个元素赋值唯一的 id
-    this.nowColor = 'green'; // 当前选择的颜色
-    this.nowWidth = '10'; // 当前选择的线条粗细
-    this.nowElement = null; // 记录当前鼠标所在的元素
-    this.nowShape = 'path';
-    this.nowFontSize = '16px';
+
+    this.color = 'green'; // 当前选择的颜色
+    this.width = '10'; // 当前选择的线条粗细
+    this.target = null; // 记录当前鼠标所在的元素
+    this.shape = 'path';
+    this.fontSize = '16px';
+
     this.draging = false; //鼠标是否正在拖动某个元素
     this.drawing = false; // 是否正在绘画过程中
     this.tempDrawingShap = null; // 缓存的正在绘画的图形的引用
@@ -28,14 +30,14 @@ var Painter = function (svgId) {
     this.offsetY = 0;
 
     // 本对象存储所有的 path
-    // 数据结构:
     // [{id: '', d:[{mx:0,my:0,lx:0,ly:0}]}]
     this.pathArr = [];
 
-    this.onChangeListener = null;
+    // diff 监听器,会在图形有变动的时候,将 diff 传入函数的参数
+    this.onDiff = null;
 
     this.svg.addEventListener('mouseenter', function (e) {
-        self.nowElement = self.svg;
+        self.target = self.svg;
     }, false);
 
     this.svg.addEventListener('mouseleave', function (e) {
@@ -49,13 +51,13 @@ var Painter = function (svgId) {
 
         // 设置鼠标样式
         if (e.target !== self.svg && !self.draging) {
-            self.nowElement = e.target;
-            self.nowElement.style.cursor = 'move';
+            self.target = e.target;
+            self.target.style.cursor = 'move';
         }
 
         // 这里主要主要的拖动操作
         if (self.draging) {
-            self.move(self.nowElement, e.clientX, e.clientY);
+            self.move(self.target, e.clientX, e.clientY);
         }
 
         // 这里主要是绘图的操作
@@ -66,7 +68,7 @@ var Painter = function (svgId) {
     }, false);
 
     this.svg.addEventListener('click', function (e) {
-        if (e.target === self.nowElement) {
+        if (e.target === self.target) {
         }
     }, false);
 
@@ -75,11 +77,10 @@ var Painter = function (svgId) {
         self.moveStartX = e.clientX;
         self.moveStartY = e.clientY;
 
-        if (self.nowElement !== self.svg && e.target === self.nowElement) {
+        if (self.target !== self.svg && e.target === self.target) {
             self.draging = true;
         } else {
             self.drawing = true;
-            console.log('开始画图');
             self.drawStartX = e.clientX;
             self.drawStartY = e.clientY;
         }
@@ -135,7 +136,8 @@ Painter.prototype.fill = function (shape, attr, id) {
         }
     }
 
-    shape.setAttribute('fill', this.nowColor);
+    shape.setAttribute('fill', this.color);
+    shape.setAttribute('stroke-linecap', 'round');
 
     this.svg.appendChild(shape);
     this.elements.push(shape);
@@ -144,11 +146,6 @@ Painter.prototype.fill = function (shape, attr, id) {
 
     return shape;
 
-};
-
-// 设置改动的监听器,当图形有变化的时候,会把 diff 传进去
-Painter.prototype.setChangeListener = function (listener) {
-    this.onChangeListener = listener;
 };
 
 // 每次增删改差的时候调用,比较本次和上次的差异,方便增量更新
@@ -191,8 +188,8 @@ Painter.prototype.diff = function (action, element, keyValue) {
 
     }
 
-    if (this.onChangeListener) {
-        this.onChangeListener(diff);
+    if (this.onDiff) {
+        this.onDiff(diff);
     }
 
 }
@@ -208,58 +205,33 @@ Painter.prototype.move = function (element, toX, toY) {
     this.moveStartX = toX;
     this.moveStartY = toY;
 
-    switch (this.nowElement.tagName) {
-        case 'ellipse':
-            var newX = parseInt(element.getAttribute('cx')) + parseInt(this.offsetX);
-            element.setAttribute('cx', newX);
-            var newY = parseInt(element.getAttribute('cy')) + parseInt(this.offsetY);
-            element.setAttribute('cy', newY);
-            this.diff('modify', this.nowElement, {cx: newX, cy: newY});
-            break;
-
-        case 'circle':
-            var newX = parseInt(element.getAttribute('cx')) + parseInt(this.offsetX);
-            element.setAttribute('cx', newX);
-            var newY = parseInt(element.getAttribute('cy')) + parseInt(this.offsetY);
-            element.setAttribute('cy', newY);
-            this.diff('modify', this.nowElement, {cx: newX, cy: newY});
-            break;
-
-        case 'rect':
-            var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
-            element.setAttribute('x', newX);
-            var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
-            element.setAttribute('y', newY);
-            this.diff('modify', this.nowElement, {x: newX, y: newY});
-            break;
-
-        case 'text':
-            var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
-            element.setAttribute('x', newX);
-            var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
-            element.setAttribute('y', newY);
-            this.diff('modify', this.nowElement, {x: newX, y: newY});
-            break;
-
-        case 'line':
-            var newX1 = parseInt(element.getAttribute('x1')) + parseInt(this.offsetX);
-            element.setAttribute('x1', newX1);
-            var newY1 = parseInt(element.getAttribute('y1')) + parseInt(this.offsetY);
-            element.setAttribute('y1', newY1);
-            var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
-            element.setAttribute('x2', newX2);
-            var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
-            element.setAttribute('y2', newY2);
-            this.diff('modify', this.nowElement, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
-            break;
-
-        // path 的移动比较特殊,无法调用 xy 来移动,需要重新绘制图形
-        case 'path':
-            console.log('path 的移动比较特殊,无法调用 xy 来移动,需要重新绘制图形');
-            break;
-
+    // 将switch 改为 if
+    // 圆形和椭圆是公用的
+    if (this.target.tagName == 'ellipse' || this.target.tagName == 'circle') {
+        var newX = parseInt(element.getAttribute('cx')) + parseInt(this.offsetX);
+        element.setAttribute('cx', newX);
+        var newY = parseInt(element.getAttribute('cy')) + parseInt(this.offsetY);
+        element.setAttribute('cy', newY);
+        this.diff('modify', this.target, {cx: newX, cy: newY});
+    } else if (this.target.tagName == 'rect' || this.target.tagName == 'text') {
+        var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
+        element.setAttribute('x', newX);
+        var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
+        element.setAttribute('y', newY);
+        this.diff('modify', this.target, {x: newX, y: newY});
+    } else if (this.target.tagName == 'line') {
+        var newX1 = parseInt(element.getAttribute('x1')) + parseInt(this.offsetX);
+        element.setAttribute('x1', newX1);
+        var newY1 = parseInt(element.getAttribute('y1')) + parseInt(this.offsetY);
+        element.setAttribute('y1', newY1);
+        var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
+        element.setAttribute('x2', newX2);
+        var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
+        element.setAttribute('y2', newY2);
+        this.diff('modify', this.target, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
+    } else if (this.target.tagName == 'path') {
+        console.log('这个比较特殊');
     }
-
 
 }
 
@@ -320,7 +292,7 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
     this.offsetY = clientY - this.drawStartY;
 
     // 线段,直接看做起点和终点
-    if (this.nowShape == 'line') {
+    if (this.shape == 'line') {
 
         // line 的增量是变化的,每一次移动都在变
         this.offsetX = clientX - this.moveStartX;
@@ -331,34 +303,34 @@ Painter.prototype.draw = function (startX, startY, clientX, clientY) {
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
-    } else if (this.nowShape == 'rect') {
+    } else if (this.shape == 'rect') {
 
         if (!this.tempDrawingShap) {
             this.tempDrawingShap = this.rect(startX, startY, 0, 0);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
-    } else if (this.nowShape == 'circle') {
+    } else if (this.shape == 'circle') {
         if (!this.tempDrawingShap) {
             this.tempDrawingShap = this.circle(startX - this.offsetX, startY - this.offsetY, 0);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
-    } else if (this.nowShape == 'ellipse') {
+    } else if (this.shape == 'ellipse') {
 
         if (!this.tempDrawingShap) {
             this.tempDrawingShap = this.ellipse(startX, startY, 0, 0);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
-    } else if (this.nowShape == 'path') {
+    } else if (this.shape == 'path') {
+
         // path 同 line
         this.offsetX = clientX - this.moveStartX;
         this.offsetY = clientY - this.moveStartY;
 
         if (!this.tempDrawingShap) {
             this.tempDrawingShap = this.path(startX, startY, 0, 0);
-            console.log(this.tempDrawingShap);
         } else {
             this.fresh(this.tempDrawingShap, clientX, clientY);
         }
@@ -417,8 +389,8 @@ Painter.prototype.rect = function (x, y, width, height) {
 Painter.prototype.line = function (x1, y1, x2, y2) {
     var attr = this.attr('x1', 'y1', 'x2', 'y2', arguments);
 
-    attr.stroke = this.nowColor;
-    attr.strokeWidth = this.nowWidth;
+    attr.stroke = this.color;
+    attr['stroke-width'] = this.width;
 
     var shape = this.fill('line', attr);
     return shape;
@@ -427,8 +399,8 @@ Painter.prototype.line = function (x1, y1, x2, y2) {
 Painter.prototype.text = function (x, y, text) {
     var attr = this.attr('x', 'y', 'innerHTML', arguments);
 
-    attr.stroke = this.nowColor;
-    attr.strokeWidth = this.nowWidth;
+    attr.stroke = this.color;
+    attr.strokeWidth = this.width;
 
     var shape = this.fill('text', attr);
     return shape;
@@ -473,10 +445,63 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         tempStr += ' m ' + x + ' ' + y;
         tempStr += ' l ' + toX + ' ' + toY;
 
-        var shape = this.fill('path', {d: tempStr, stroke: this.nowColor, strokeWidth: this.nowWidth}, id);
+        var shape = this.fill('path', {d: tempStr, stroke: this.color}, id);
+        shape.setAttribute('stroke-width', this.width);
         this.nowId++;
         return shape;
 
     }
 
 };
+
+// diff 的渲染器,得到 diff 后将 diff 绘制在图中,实现图形的同步
+Painter.prototype.drawDiff = function (diff) {
+
+    if (diff.action === 'add') {
+
+        var shape = document.createElementNS('http://www.w3.org/2000/svg', diff.data.tagName);
+        shape.id = diff.elementId;
+
+        for (var i in diff.data.attributes) {
+
+            if (i === 'innerHTML') {
+                shape.innerHTML = diff.data.attributes[i];
+            } else {
+                shape.setAttribute(i, diff.data.attributes[i]);
+            }
+
+        }
+
+        shape.setAttribute('fill', this.color);
+
+        svg.appendChild(shape);
+
+        this.elements.push(shape);
+
+    } else if (diff.action === 'modify') {
+
+        var ele = svg.getElementById(diff.elementId.toString());
+
+        if (ele.tagName == 'path') {
+
+            var d = ele.getAttribute('d');
+
+            d += ' m ' + diff.data.mx + ' ' + diff.data.my;
+            d += ' l ' + diff.data.lx + ' ' + diff.data.ly;
+
+            ele.setAttribute('d', d);
+            ele.setAttribute('stroke-width', this.width);
+        } else if (ele.tagName == 'line') {
+            for (var x in diff.data) {
+                ele.setAttribute(x, diff.data[x])
+            }
+            ele.setAttribute('stroke-width', this.width);
+        } else  {
+            for (var x in diff.data) {
+            ele.setAttribute(x, diff.data[x])
+        }
+    }
+
+    }
+
+}

@@ -86,72 +86,34 @@
         for (x in data) {
             painter[x] = data[x];
         }
+        console.log('config data:');
+        console.log(data);
     }, false);
 
-    socket.on('draw', function (data) {
-
-        console.log(data);
-
-        if (data.data.action === 'add') {
-
-            var shape = document.createElementNS('http://www.w3.org/2000/svg', data.data.data.tagName);
-            shape.id = data.data.elementId;
-
-            for (var i in data.data.data.attributes) {
-
-                if (i === 'innerHTML') {
-                    shape.innerHTML = data.data.data.attributes[i];
-                } else {
-                    shape.setAttribute(i, data.data.data.attributes[i]);
-                }
-            }
-
-            shape.setAttribute('fill', painter.nowColor);
-
-            svg.appendChild(shape);
-
-            painter.elements.push(shape);
-
-        } else if (data.data.action === 'modify') {
-
-            var ele = svg.getElementById(data.data.elementId.toString());
-
-            if (ele.tagName == 'path') {
-
-                var d = ele.getAttribute('d');
-
-                d += ' m ' + data.data.data.mx + ' ' + data.data.data.my;
-                d += ' l ' + data.data.data.lx + ' ' + data.data.data.ly;
-
-                ele.setAttribute('d', d);
-            } else {
-                for (var x in data.data.data) {
-                    ele.setAttribute(x, data.data.data[x])
-                }
-            }
-
-        }
-
+    socket.on('draw', function (diff) {
+        painter.drawDiff(diff);
     });
 
     var painter = new Painter('svg');
 
-    painter.setChangeListener(function (diff) {
-        socket.emit('draw', {data: diff});
-    });
+    // 监听 diff
+    painter.onDiff = function (diff) {
+        socket.emit('draw', diff);
+    };
+
 
     var shapeSelector = document.getElementById('shape-selector');
     shapeSelector.addEventListener('click', function (e) {
         if (e.target.className == 'child') {
-            painter.nowShape = e.target.id;
+            painter.shape = e.target.id;
         }
     }, false);
 
     var colorSelector = document.getElementById('color-selector');
     colorSelector.addEventListener('click', function (e) {
         if (e.target.className == 'child') {
-            painter.nowColor = e.target.id;
-            socket.emit('config', {nowColor: e.target.id});
+            painter.color = e.target.id;
+            socket.emit('config', {color: e.target.id});
         }
     }, false);
 
