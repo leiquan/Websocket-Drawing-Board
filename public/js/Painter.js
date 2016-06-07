@@ -144,6 +144,8 @@ Painter.prototype.fill = function (shape, attr, id) {
 
     this.diff('add', shape);
 
+    console.log(this.elements);
+
     return shape;
 
 };
@@ -156,6 +158,9 @@ Painter.prototype.diff = function (action, element, keyValue) {
     // action 直接记录修改行为,增删改查
     var diff = null;
     if (action === 'add') {
+
+        // 这里要先进行断点,否则,会出现接着上次画的问题
+        this.tempDrawingShap = null;
 
         // 得到 attr 数组:
         var attr = {};
@@ -475,8 +480,11 @@ Painter.prototype.drawDiff = function (diff) {
         shape.setAttribute('fill', this.color);
 
         svg.appendChild(shape);
+        this.nowId ++;
 
         this.elements.push(shape);
+
+        console.log(this.elements);
 
     } else if (diff.action === 'modify') {
 
