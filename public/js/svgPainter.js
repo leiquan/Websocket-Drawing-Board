@@ -29,9 +29,12 @@ var Painter = function (svgId) {
     this.offsetX = 0;
     this.offsetY = 0;
 
-    // 本对象存储所有的 path
+    // 本数组存储所有的 path
     // [{id: '', d:[{mx:0,my:0,lx:0,ly:0}]}]
     this.pathArr = [];
+    // 本数组存储所有的 transform
+    // [{id: '', transform: [{translate: '150 170'}]}];
+    this.transformArr = [];
 
     // diff 监听器,会在图形有变动的时候,将 diff 传入函数的参数
     this.onDiff = null;
@@ -202,6 +205,8 @@ Painter.prototype.diff = function (action, element, keyValue) {
 // 改变x 和 y,将对应的元素移动
 Painter.prototype.move = function (element, toX, toY) {
 
+    var self = this;
+
     // 求 offset
     this.offsetX = toX - this.moveStartX;
     this.offsetY = toY - this.moveStartY;
@@ -235,10 +240,89 @@ Painter.prototype.move = function (element, toX, toY) {
         element.setAttribute('y2', newY2);
         this.diff('modify', this.target, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
     } else if (this.target.tagName == 'path') {
-        console.log('这个比较特殊');
+        
+        // 哈哈,咱们用 transform 来移动!完美啊
+
+        var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
+        var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
+
+        this.transform('translate', newX + ' ' + newY, element);
+
+        element.setAttribute('x', newX)
+        element.setAttribute('y', newY)
     }
 
 }
+
+// transform 的封装,用来替代 move
+Painter.prototype.transform = function (key, value, element) {
+
+    // 是否新增id 和 transform 的标志位
+    var addFlag = true;
+    var tempTransformArr = []; // 用来存储本 element 对应的全部 transform
+
+    // 遍历数组
+    for (var i = 0; i < this.transformArr.length; i++) {
+
+        // 在 id 里面作修改
+        if (this.transformArr[i].id == element.id) {
+
+            addFlag = false;
+            transformId = element.id;
+
+            // 遍历 transform 数组,有则覆盖,无则新增
+            var attrAddFlag = true;// 属性存在的标志
+            for (var j = 0; j < this.transformArr[i].transform.length; j++) {
+
+
+                if (this.transformArr[i].transform[j].hasOwnProperty(key)) {
+
+                    attrAddFlag = false;
+
+                    var o = {};
+                    o[key] = value;
+
+                    this.transformArr[i].transform[j] = o;
+
+                }
+            }
+
+            if (attrAddFlag) {
+
+                var o = {};
+                o[key] = value;
+
+                this.transformArr[i].transform.push(o);
+            }
+            tempTransformArr = this.transformArr[i].transform;
+
+        }
+    }
+
+    // 增加一个 id 和 transform
+    if (addFlag) {
+
+        var o = {};
+        o[key] = value;
+
+        this.transformArr.push({id: element.id, transform: [o]});
+
+        tempTransformArr = [o];
+
+    }
+
+    // 将 transform 数组转换成属性
+    // 操作对象为elementid 指定的对象
+    var transformTxt = '';
+    for (var k = 0; k < tempTransformArr.length; k++) {
+        for (transName in tempTransformArr[k]) {
+            transformTxt += transName + '(' + tempTransformArr[k][transName] + ') ';
+        }
+    }
+
+    element.setAttribute('transform', transformTxt);
+};
+
 
 // 刷新一个图形,注意,起点不变,只变终点,并且需要处理重点的映射关系
 Painter.prototype.fresh = function (element, clientX, clientY) {
@@ -452,6 +536,8 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
         var shape = this.fill('path', {d: tempStr, stroke: this.color}, id);
         shape.setAttribute('stroke-width', this.width);
+        shape.setAttribute('x', 0);
+        shape.setAttribute('y', 0);
         this.nowId++;
         return shape;
 
@@ -516,7 +602,7 @@ Painter.prototype.drawDiff = function (diff) {
 
 // clear 这个方法用来清空全部图形,主要用来橡皮擦的全部删除,以及在网页调试的时候的刷新后调用
 Painter.prototype.clear = function () {
-    console.log('这里已经执行了 clear');
+
     // 1.清除已经绘画的全部元素
     // 2.将缓存的数组和状态复位
     while (svg.hasChildNodes()) {
