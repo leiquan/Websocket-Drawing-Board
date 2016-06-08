@@ -548,12 +548,16 @@ Painter.prototype.saveAsFile = function () {
 
     var filename = 'Websocket_drawing_board_image_' + year + month + day + hour + minute + second + '.svg';
 
+    var event = new MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true
+    });
+
     var saveLink = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
     saveLink.href = imgData;
     saveLink.download = filename;
 
-    var event = document.createEvent('MouseEvents');
-    event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
     saveLink.dispatchEvent(event);
 
 }
