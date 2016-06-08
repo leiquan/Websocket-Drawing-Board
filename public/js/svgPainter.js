@@ -155,10 +155,7 @@ Painter.prototype.fill = function (shape, attr, id) {
 
 // 每次增删改差的时候调用,比较本次和上次的差异,方便增量更新
 Painter.prototype.diff = function (action, element, keyValue) {
-    // 如何 diff?
-    // svg 由属性组成,遍历属性,找到变动
-    // 当增删改差的时候调用 diff 即可,记录下 diff 的属性值
-    // action 直接记录修改行为,增删改查
+
     var diff = null;
     if (action === 'add') {
 
@@ -195,7 +192,9 @@ Painter.prototype.diff = function (action, element, keyValue) {
     } else if (action === 'remove') {
 
     } else if (action === 'clear') {
-
+        diff = {
+            action: action
+        };
     } else if (action === 'transform') {
         diff = {
             action: action,
@@ -607,6 +606,8 @@ Painter.prototype.drawDiff = function (diff) {
     } else if (diff.action === 'transform') {
         var ele = svg.getElementById(diff.elementId.toString());
         ele.setAttribute('transform', diff.data.transform);
+    } else if (diff.action === 'clear') {
+        this.clear();
     }
 
 }
@@ -627,6 +628,7 @@ Painter.prototype.clear = function () {
     this.drawing = false;
     this.tempDrawingShap = null;
 
+    this.diff('clear');
 }
 
 Painter.prototype.saveAsFile = function () {

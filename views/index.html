@@ -52,7 +52,6 @@
     </div>
     <div class="item">
         <div class="menu">
-            <div class="child" id="eraser">橡皮擦</div>
             <div class="child" id="clear">清空画布</div>
             <div class="child" id="file"> 导出</div>
         </div>
@@ -69,6 +68,8 @@
     var content = document.getElementById('content');
 
     var svg = document.getElementById('svg');
+
+    var color = ''; // 这个颜色用来存储画笔的颜色,当调用橡皮擦的时候,其实是用了个和底色相同的颜色而已,那么切换回来后,颜色需要还原
 
     socket.on('connect', function () {
         console.log('Client conneced!Clear board!');
@@ -91,6 +92,7 @@
     });
 
     var painter = new Painter('svg');
+    color = painter.color;
 
     // 监听 diff
     painter.onDiff = function (diff) {
@@ -102,6 +104,8 @@
     shapeSelector.addEventListener('click', function (e) {
         if (e.target.className == 'child') {
             painter.shape = e.target.id;
+            console.log(color);
+            painter.color = color;
         }
     }, false);
 
@@ -110,20 +114,13 @@
         if (e.target.className == 'child') {
             painter.color = e.target.id;
             socket.emit('config', {color: e.target.id});
+            color = e.target.id;
         }
-    }, false);
-
-    var eraser = document.getElementById('eraser');
-    eraser.addEventListener('click', function (e) {
-        painter.color = '#eee';
-        painter.shape = 'path';
-        socket.emit('config', {color: '#eee'});
     }, false);
 
     var clear = document.getElementById('clear');
     clear.addEventListener('click', function () {
         painter.clear();
-        socket.emit('clear');
     }, false);
 
     var file = document.getElementById('file');
