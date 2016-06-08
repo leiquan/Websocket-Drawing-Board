@@ -32,6 +32,7 @@ var Painter = function (svgId) {
     // 本数组存储所有的 path
     // [{id: '', d:[{mx:0,my:0,lx:0,ly:0}]}]
     this.pathArr = [];
+    
     // 本数组存储所有的 transform
     // [{id: '', transform: [{translate: '150 170'}]}];
     this.transformArr = [];
@@ -677,11 +678,11 @@ Painter.prototype.addHandleBar = function (ele) {
     var clientRect = ele.getBoundingClientRect();
 
     // 顺时针旋转
-    handle1.style.left = clientRect.left -10 + 'px';
-    handle1.style.top = clientRect.top -10 + 'px';
+    handle1.style.left = clientRect.left - 10 + 'px';
+    handle1.style.top = clientRect.top - 10 + 'px';
 
     handle2.style.left = clientRect.left + clientRect.width + 'px';
-    handle2.style.top = clientRect.top -10 + 'px';
+    handle2.style.top = clientRect.top - 10 + 'px';
 
     handle3.style.left = clientRect.left + clientRect.width + 'px';
     handle3.style.top = clientRect.top + clientRect.height + 'px';
