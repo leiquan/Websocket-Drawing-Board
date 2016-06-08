@@ -71,7 +71,8 @@ var Painter = function (svgId) {
     }, false);
 
     this.svg.addEventListener('click', function (e) {
-        if (e.target === self.target) {
+        if (e.target === self.target && e.target !== self.svg) {
+            self.addHandleBar(e.target);
         }
     }, false);
 
@@ -119,7 +120,7 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 
 // 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引
 Painter.prototype.fill = function (shape, attr, id) {
-    if (id!=undefined) {
+    if (id != undefined) {
         id = id;
     } else {
         id = this.nowId;
@@ -584,7 +585,7 @@ Painter.prototype.drawDiff = function (diff) {
         var ele = svg.getElementById(diff.elementId.toString());
 
         if (ele.tagName == 'path') {
-            
+
             var d = ele.getAttribute('d');
 
             d += ' m ' + diff.data.mx + ' ' + diff.data.my;
@@ -658,5 +659,34 @@ Painter.prototype.saveAsFile = function () {
     saveLink.download = filename;
 
     saveLink.dispatchEvent(event);
+
+}
+
+// 这里用 div 来添加 bar 和边框
+Painter.prototype.addHandleBar = function (ele) {
+
+    var mask = document.getElementById('svg-websocket-board-mask');
+    mask.style.zIndex = '1000';
+
+    var handle1 = document.getElementById('handle1');
+    var handle2 = document.getElementById('handle2');
+    var handle3 = document.getElementById('handle3');
+    var handle4 = document.getElementById('handle4');
+
+
+    var clientRect = ele.getBoundingClientRect();
+
+    // 顺时针旋转
+    handle1.style.left = clientRect.left -10 + 'px';
+    handle1.style.top = clientRect.top -10 + 'px';
+
+    handle2.style.left = clientRect.left + clientRect.width + 'px';
+    handle2.style.top = clientRect.top -10 + 'px';
+
+    handle3.style.left = clientRect.left + clientRect.width + 'px';
+    handle3.style.top = clientRect.top + clientRect.height + 'px';
+
+    handle4.style.left = clientRect.left - 10 + 'px';
+    handle4.style.top = clientRect.top + clientRect.height + 'px';
 
 }

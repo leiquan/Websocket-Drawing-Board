@@ -53,3 +53,32 @@
 .menu :last-child{
     border-bottom: none;
 }
+
+#svg-websocket-board-mask {
+    width: 600px;
+    height: 500px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: -1;
+}
+
+#svg-websocket-board-mask div {
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border: 1px solid #333;
+    box-sizing: border-box;
+    position: absolute;
+}
+#handle1 {
+    cursor: nw-resize;
+}
+#handle2 {
+    cursor: ne-resize;
+}
+#handle3 {
+    cursor: se-resize;
+}#handle4 {
+     cursor: sw-resize;
+ }
