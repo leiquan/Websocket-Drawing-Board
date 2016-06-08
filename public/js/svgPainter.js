@@ -194,6 +194,14 @@ Painter.prototype.diff = function (action, element, keyValue) {
         };
     } else if (action === 'remove') {
 
+    } else if (action === 'clear') {
+
+    } else if (action === 'transform') {
+        diff = {
+            action: action,
+            elementId: element.id,
+            data: keyValue
+        };
     }
 
     if (this.onDiff) {
@@ -240,9 +248,8 @@ Painter.prototype.move = function (element, toX, toY) {
         element.setAttribute('y2', newY2);
         this.diff('modify', this.target, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
     } else if (this.target.tagName == 'path') {
-        
-        // 哈哈,咱们用 transform 来移动!完美啊
 
+        // path 比较特别,用的是 transform 来移动图形,他的 x 和 y 属性并不是自带的
         var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
         var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
 
@@ -321,8 +328,9 @@ Painter.prototype.transform = function (key, value, element) {
     }
 
     element.setAttribute('transform', transformTxt);
-};
 
+    this.diff('transform', this.target, {transform: transformTxt});
+};
 
 // 刷新一个图形,注意,起点不变,只变终点,并且需要处理重点的映射关系
 Painter.prototype.fresh = function (element, clientX, clientY) {
@@ -596,6 +604,9 @@ Painter.prototype.drawDiff = function (diff) {
             }
         }
 
+    } else if (diff.action === 'transform') {
+        var ele = svg.getElementById(diff.elementId.toString());
+        ele.setAttribute('transform', diff.data.transform);
     }
 
 }
