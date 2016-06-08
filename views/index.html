@@ -91,6 +91,10 @@
         painter.drawDiff(diff);
     });
 
+    socket.on('clear', function () {
+        painter.clear();
+    });
+
     var painter = new Painter('svg');
     color = painter.color;
 
@@ -121,6 +125,7 @@
     var clear = document.getElementById('clear');
     clear.addEventListener('click', function () {
         painter.clear();
+        socket.emit('clear');
     }, false);
 
     var file = document.getElementById('file');

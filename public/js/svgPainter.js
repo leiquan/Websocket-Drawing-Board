@@ -119,11 +119,11 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 
 // 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引
 Painter.prototype.fill = function (shape, attr, id) {
-    if (id) {
+    if (id!=undefined) {
         id = id;
     } else {
-        this.nowId++;
         id = this.nowId;
+        this.nowId++;
     }
 
 
@@ -584,13 +584,14 @@ Painter.prototype.drawDiff = function (diff) {
         var ele = svg.getElementById(diff.elementId.toString());
 
         if (ele.tagName == 'path') {
-
+            
             var d = ele.getAttribute('d');
 
             d += ' m ' + diff.data.mx + ' ' + diff.data.my;
             d += ' l ' + diff.data.lx + ' ' + diff.data.ly;
 
             ele.setAttribute('d', d);
+
             ele.setAttribute('stroke-width', this.width);
         } else if (ele.tagName == 'line') {
             for (var x in diff.data) {
@@ -628,7 +629,6 @@ Painter.prototype.clear = function () {
     this.drawing = false;
     this.tempDrawingShap = null;
 
-    this.diff('clear');
 }
 
 Painter.prototype.saveAsFile = function () {
