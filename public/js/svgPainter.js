@@ -120,18 +120,9 @@ var Painter = function (svgId) {
 
 };
 
-// 计算两坐标点之间的直线距离
-Painter.prototype.distance = function (x1, y1, x2, y2) {
+// 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引,此函数新增是否实心的选项
+Painter.prototype.fill = function (shape, attr, id, isHollow) {
 
-    var calX = x2 - x1;
-    var calY = y2 - y1;
-
-    return Math.pow((calX * calX + calY * calY), 0.5);
-
-}
-
-// 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引
-Painter.prototype.fill = function (shape, attr, id) {
     if (id != undefined) {
         id = id;
     } else {
@@ -144,7 +135,6 @@ Painter.prototype.fill = function (shape, attr, id) {
     shape.id = id;
 
     for (var i in attr) {
-
         if (i === 'innerHTML') {
             shape.innerHTML = attr[i];
         } else {
@@ -152,8 +142,18 @@ Painter.prototype.fill = function (shape, attr, id) {
         }
     }
 
-    shape.setAttribute('fill', this.color);
-    shape.setAttribute('stroke-linecap', 'round');
+    if (isHollow) {
+        shape.setAttribute('fill', 'transparent');
+        shape.setAttribute('stroke', 'red');
+        shape.setAttribute('stroke-width', '10');
+
+        shape.setAttribute('stroke-linecap', 'round');
+    } else {
+        shape.setAttribute('fill', this.color);
+        shape.setAttribute('stroke-linecap', 'round');
+    }
+
+
 
     this.svg.appendChild(shape);
     this.elements.push(shape);
@@ -473,7 +473,15 @@ Painter.prototype.attr = function () {
     }
 
     return attr;
-};
+};// 计算两坐标点之间的直线距离
+Painter.prototype.distance = function (x1, y1, x2, y2) {
+
+    var calX = x2 - x1;
+    var calY = y2 - y1;
+
+    return Math.pow((calX * calX + calY * calY), 0.5);
+
+}
 
 Painter.prototype.circle = function (cx, cy, r) {
     var attr = this.attr('cx', 'cy', 'r', arguments);
@@ -689,12 +697,6 @@ Painter.prototype.appendHandleBar = function () {
     this.mask.style.left = '0px';
     this.mask.style.zIndex = '-1';
 
-    this.mask.addEventListener('click', function (e) {
-        if (e.target.id !== 'handle1' && e.target.id !== 'handle2' && e.target.id !== 'handle3' && e.target.id !== 'handle4') {
-            self.mask.style.zIndex = '-1';
-        }
-    }, false);
-
     var next = svg.nextSibling;
 
     if (next) {
@@ -720,10 +722,58 @@ Painter.prototype.appendHandleBar = function () {
     this.handle4.id = 'handle4';
     this.handle4.style.cursor = 'sw-resize';
 
+    var style = {
+        width: "10px",
+        height: "10px",
+        backgroundColor: 'white',
+        border: '1px solid #333',
+        boxSizing: 'border-box',
+        position: 'absolute'
+    };
+
+    for (var i in style) {
+        this.handle1.style[i] = style[i];
+        this.handle2.style[i] = style[i];
+        this.handle3.style[i] = style[i];
+        this.handle4.style[i] = style[i];
+    }
+
     this.mask.appendChild(this.handle1);
     this.mask.appendChild(this.handle2);
     this.mask.appendChild(this.handle3);
     this.mask.appendChild(this.handle4);
+
+    // 鼠标事件初始化
+    this.mask.addEventListener('click', function (e) {
+        if (e.target.id !== 'handle1' && e.target.id !== 'handle2' && e.target.id !== 'handle3' && e.target.id !== 'handle4') {
+            self.mask.style.zIndex = '-1';
+        }
+    }, false);
+
+    // 四个 handle 的鼠标操作处理
+    var mouseDownHandle = function (e) {
+        console.log('down');
+        this.addEventListener('mousemove', mouseMoveHandle, false);
+    }
+
+    var mouseMoveHandle = function (e) {
+        console.log('move,鼠标需要跟随,并且缩放需要同步');
+    }
+
+    var mouseUpHandle = function (e) {
+        console.log('up');
+        this.removeEventListener('mousemove', mouseMoveHandle, false);
+    }
+
+    this.handle1.addEventListener('mousedown', mouseDownHandle, false);
+    this.handle2.addEventListener('mousedown', mouseDownHandle, false);
+    this.handle3.addEventListener('mousedown', mouseDownHandle, false);
+    this.handle4.addEventListener('mousedown', mouseDownHandle, false);
+
+    this.handle1.addEventListener('mouseup', mouseUpHandle, false);
+    this.handle2.addEventListener('mouseup', mouseUpHandle, false);
+    this.handle3.addEventListener('mouseup', mouseUpHandle, false);
+    this.handle4.addEventListener('mouseup', mouseUpHandle, false);
 
 }
 

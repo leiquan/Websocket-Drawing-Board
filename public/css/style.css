@@ -53,16 +53,3 @@
 .menu :last-child{
     border-bottom: none;
 }
-
-#svg-websocket-board-mask {
-
-}
-
-#svg-websocket-board-mask div {
-    width: 10px;
-    height: 10px;
-    background-color: white;
-    border: 1px solid #333;
-    box-sizing: border-box;
-    position: absolute;
-}

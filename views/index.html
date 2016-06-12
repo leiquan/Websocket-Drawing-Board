@@ -11,12 +11,29 @@
 <body>
 
 <svg id="svg" xmlns="http://www.w3.org/2000/svg" version="1.1">
+
+    <circle xmlns="http://www.w3.org/2000/svg" cx="100" cy="50" r="40" stroke="red" stroke-width="10" fill="#eee"/>
+
+    <!--圆环尝试 -->
+    <path d="
+            M 200 200
+            A 100 100 0 1 1 200 201
+            Z
+            M 350 200
+            A 50 50 0 1 0 350 201
+            Z" style="fill:red; stroke:white" x="0"
+          y="0"/>
+
+    <path d="M10 315
+           A 30 50 0 0 1 162.55 162.45" stroke="black" fill="green" stroke-width="2" fill-opacity="0.5" x="0" y="0"/>
+
+
 </svg>
 <!--<div id="svg-websocket-board-mask">-->
-    <!--<div id="handle1"></div>-->
-    <!--<div id="handle2"></div>-->
-    <!--<div id="handle3"></div>-->
-    <!--<div id="handle4"></div>-->
+<!--<div id="handle1"></div>-->
+<!--<div id="handle2"></div>-->
+<!--<div id="handle3"></div>-->
+<!--<div id="handle4"></div>-->
 <!--</div>-->
 
 <div class="tool-box">
@@ -139,6 +156,16 @@
         painter.saveAsFile();
     }, false);
 
+
+    // 测试 实心 circle
+    painter.circle(200, 200, 50);
+    // 测试 空心 circle
+    painter.fill('circle',
+            {
+                cx: 300,
+                cy: 400,
+                r: 100
+            }, null, true);
 
 </script>
 
