@@ -37,8 +37,17 @@ var Painter = function (svgId) {
     // [{id: '', transform: [{translate: '150 170'}]}];
     this.transformArr = [];
 
+    // 这里存储操作的相关元素
+    this.mask = null;
+    this.handle1 = null;
+    this.handle2 = null;
+    this.handle3 = null;
+    this.handle4 = null;
+
     // diff 监听器,会在图形有变动的时候,将 diff 传入函数的参数
     this.onDiff = null;
+
+    // svg 事件处理
 
     this.svg.addEventListener('mouseenter', function (e) {
         self.target = self.svg;
@@ -73,7 +82,7 @@ var Painter = function (svgId) {
 
     this.svg.addEventListener('click', function (e) {
         if (e.target === self.target && e.target !== self.svg) {
-            self.addHandleBar(e.target);
+            self.showHandleBar(e.target);
         }
     }, false);
 
@@ -106,8 +115,10 @@ var Painter = function (svgId) {
 
     }, false);
 
-};
+    // 初始化
+    this.appendHandleBar();
 
+};
 
 // 计算两坐标点之间的直线距离
 Painter.prototype.distance = function (x1, y1, x2, y2) {
@@ -148,8 +159,6 @@ Painter.prototype.fill = function (shape, attr, id) {
     this.elements.push(shape);
 
     this.diff('add', shape);
-
-    console.log(this.elements);
 
     return shape;
 
@@ -262,7 +271,7 @@ Painter.prototype.move = function (element, toX, toY) {
 
 }
 
-// transform 的封装,用来替代 move
+// transform 的封装,用来替代和补充move
 Painter.prototype.transform = function (key, value, element) {
 
     // 是否新增id 和 transform 的标志位
@@ -333,7 +342,7 @@ Painter.prototype.transform = function (key, value, element) {
     this.diff('transform', this.target, {transform: transformTxt});
 };
 
-// 刷新一个图形,注意,起点不变,只变终点,并且需要处理重点的映射关系
+// 刷新一个图形,注意,起点不变,只变终点,并且需要处理终点的映射关系
 Painter.prototype.fresh = function (element, clientX, clientY) {
 
     // 刷新起止点
@@ -382,7 +391,7 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
     }
 };
 
-// 不同的图形,在处理上并不一样,并且这里只要一个图形的 instance
+// 不同的图形,在处理上并不一样,并且这里只要一个图形的instance
 Painter.prototype.draw = function (startX, startY, clientX, clientY) {
 
     // 求 offset
@@ -663,31 +672,79 @@ Painter.prototype.saveAsFile = function () {
 
 }
 
+// 封装函数，用来在 svg 的后面插入一个 div
+Painter.prototype.appendHandleBar = function () {
+
+    var self = this;
+
+    // 添加mask父容器
+    var parent = this.svg.parentNode;
+
+    this.mask = document.createElement('div');
+    this.mask.id = 'svg-websocket-board-mask';
+    this.mask.style.width = this.svg.clientWidth + 'px';
+    this.mask.style.height = this.svg.clientHeight + 'px';
+    this.mask.style.position = 'absolute';
+    this.mask.style.top = '0px';
+    this.mask.style.left = '0px';
+    this.mask.style.zIndex = '-1';
+
+    this.mask.addEventListener('click', function (e) {
+        if (e.target.id !== 'handle1' && e.target.id !== 'handle2' && e.target.id !== 'handle3' && e.target.id !== 'handle4') {
+            self.mask.style.zIndex = '-1';
+        }
+    }, false);
+
+    var next = svg.nextSibling;
+
+    if (next) {
+        parent.insertBefore(this.mask, next);
+    } else {
+        parent.appendChild(this.mask);
+    }
+
+    // 添加四个 handlebar,从左上角顺时针
+    this.handle1 = document.createElement('div');
+    this.handle1.id = 'handle1';
+    this.handle1.style.cursor = 'nw-resize';
+
+    this.handle2 = document.createElement('div');
+    this.handle2.id = 'handle2';
+    this.handle2.style.cursor = 'ne-resize';
+
+    this.handle3 = document.createElement('div');
+    this.handle3.id = 'handle3';
+    this.handle3.style.cursor = 'se-resize';
+
+    this.handle4 = document.createElement('div');
+    this.handle4.id = 'handle4';
+    this.handle4.style.cursor = 'sw-resize';
+
+    this.mask.appendChild(this.handle1);
+    this.mask.appendChild(this.handle2);
+    this.mask.appendChild(this.handle3);
+    this.mask.appendChild(this.handle4);
+
+}
+
 // 这里用 div 来添加 bar 和边框
-Painter.prototype.addHandleBar = function (ele) {
+Painter.prototype.showHandleBar = function (ele) {
 
-    var mask = document.getElementById('svg-websocket-board-mask');
-    mask.style.zIndex = '1000';
-
-    var handle1 = document.getElementById('handle1');
-    var handle2 = document.getElementById('handle2');
-    var handle3 = document.getElementById('handle3');
-    var handle4 = document.getElementById('handle4');
-
+    this.mask.style.zIndex = '1000';
 
     var clientRect = ele.getBoundingClientRect();
 
     // 顺时针旋转
-    handle1.style.left = clientRect.left - 10 + 'px';
-    handle1.style.top = clientRect.top - 10 + 'px';
+    this.handle1.style.left = clientRect.left - 10 + 'px';
+    this.handle1.style.top = clientRect.top - 10 + 'px';
 
-    handle2.style.left = clientRect.left + clientRect.width + 'px';
-    handle2.style.top = clientRect.top - 10 + 'px';
+    this.handle2.style.left = clientRect.left + clientRect.width + 'px';
+    this.handle2.style.top = clientRect.top - 10 + 'px';
 
-    handle3.style.left = clientRect.left + clientRect.width + 'px';
-    handle3.style.top = clientRect.top + clientRect.height + 'px';
+    this.handle3.style.left = clientRect.left + clientRect.width + 'px';
+    this.handle3.style.top = clientRect.top + clientRect.height + 'px';
 
-    handle4.style.left = clientRect.left - 10 + 'px';
-    handle4.style.top = clientRect.top + clientRect.height + 'px';
+    this.handle4.style.left = clientRect.left - 10 + 'px';
+    this.handle4.style.top = clientRect.top + clientRect.height + 'px';
 
 }
