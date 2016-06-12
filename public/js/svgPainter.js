@@ -32,7 +32,7 @@ var Painter = function (svgId) {
     // 本数组存储所有的 path
     // [{id: '', d:[{mx:0,my:0,lx:0,ly:0}]}]
     this.pathArr = [];
-    
+
     // 本数组存储所有的 transform
     // [{id: '', transform: [{translate: '150 170'}]}];
     this.transformArr = [];
