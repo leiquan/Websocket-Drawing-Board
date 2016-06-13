@@ -248,26 +248,18 @@ Painter.prototype.move = function (element, toX, toY) {
     // 刷新起止点
     this.moveStartX = toX;
     this.moveStartY = toY;
-    
-    // 圆形和椭圆是公用的
-    if (this.target.tagName == 'rect' || this.target.tagName == 'text') {
 
+    // 矩形和 text 默认有 xy 那么就要转换,没有的直接拿来用
+    if (this.target.tagName == 'rect' || this.target.tagName == 'text') {
         var newX = parseInt(this.offsetX);
         var newY = parseInt(this.offsetY);
-
         this.transform('translate', newX + ' ' + newY, element);
-
         element.setAttribute('x', parseInt(element.getAttribute('x')) + newX)
         element.setAttribute('y', parseInt(element.getAttribute('y')) + newY)
-
     } else {
-
-        // path 比较特别,用的是 transform 来移动图形,他的 x 和 y 属性并不是自带的
         var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
         var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
-
         this.transform('translate', newX + ' ' + newY, element);
-
         element.setAttribute('x', newX)
         element.setAttribute('y', newY)
     }
@@ -345,7 +337,7 @@ Painter.prototype.transform = function (key, value, element) {
     this.diff('transform', this.target, {transform: transformTxt});
 };
 
-// 刷新一个图形,注意,起点不变,只变终点,并且需要处理终点的映射关系
+// 刷新一个图形,主要用来放大或者缩小
 Painter.prototype.fresh = function (element, clientX, clientY) {
 
     // 刷新起止点
