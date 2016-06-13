@@ -121,7 +121,7 @@ var Painter = function (svgId) {
 };
 
 // 任何一个图形需要一个唯一的 id,方便在 diff 的时候索引,此函数新增是否实心的选项
-Painter.prototype.fill = function (shape, attr, id, isHollow) {
+Painter.prototype.fill = function (shape, attr, isHollow, id) {
 
     if (id != undefined) {
         id = id;
@@ -144,16 +144,15 @@ Painter.prototype.fill = function (shape, attr, id, isHollow) {
 
     if (isHollow) {
         shape.setAttribute('fill', 'transparent');
-        shape.setAttribute('stroke', 'red');
-        shape.setAttribute('stroke-width', '10');
-
-        shape.setAttribute('stroke-linecap', 'round');
+        shape.setAttribute('stroke', this.color);
+        shape.setAttribute('stroke-width', this.width);
     } else {
         shape.setAttribute('fill', this.color);
-        shape.setAttribute('stroke-linecap', 'round');
     }
 
-
+    if (shape.tagName == 'path') {
+        shape.setAttribute('stroke-linecap', 'round');
+    }
 
     this.svg.appendChild(shape);
     this.elements.push(shape);
@@ -485,19 +484,19 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 
 Painter.prototype.circle = function (cx, cy, r) {
     var attr = this.attr('cx', 'cy', 'r', arguments);
-    var shape = this.fill('circle', attr);
+    var shape = this.fill('circle', attr, true);
     return shape;
 };
 
 Painter.prototype.ellipse = function (cx, cy, rx, ry) {
     var attr = this.attr('cx', 'cy', 'rx', 'ry', arguments);
-    var shape = this.fill('ellipse', attr);
+    var shape = this.fill('ellipse', attr, true);
     return shape;
 };
 
 Painter.prototype.rect = function (x, y, width, height) {
     var attr = this.attr('x', 'y', 'width', 'height', arguments);
-    var shape = this.fill('rect', attr);
+    var shape = this.fill('rect', attr, true);
     return shape;
 };
 
