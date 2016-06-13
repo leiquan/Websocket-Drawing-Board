@@ -14,6 +14,7 @@ var Painter = function (svgId) {
 
     this.draging = false; //鼠标是否正在拖动某个元素
     this.drawing = false; // 是否正在绘画过程中
+    this.moving = false; // 这个标志主要用来在移动时候触发,延时消失,主要用来控制菜单的显示
     this.tempDrawingShap = null; // 缓存的正在绘画的图形的引用
 
     // 拖动开始的时候,记录坐标,并且此坐标随着鼠标移动而变动,用来记录每次移动的 offset
@@ -59,6 +60,12 @@ var Painter = function (svgId) {
 
     this.svg.addEventListener('mousemove', function (e) {
 
+        if (Math.abs(e.clientX - self.moveStartX) > 10 || Math.abs(e.clientY - self.moveStartY) > 10) {
+            if (self.draging) {
+                self.moving = true;
+            }
+        }
+
         // 清除鼠标样式
         self.clearMouse();
 
@@ -81,9 +88,7 @@ var Painter = function (svgId) {
     }, false);
 
     this.svg.addEventListener('click', function (e) {
-        if (e.target === self.target && e.target !== self.svg) {
-            self.showHandleBar(e.target);
-        }
+
     }, false);
 
     this.svg.addEventListener('mousedown', function (e) {
@@ -102,6 +107,18 @@ var Painter = function (svgId) {
     }, false);
 
     this.svg.addEventListener('mouseup', function (e) {
+
+        console.log('self.moving:' + self.moving);
+        setTimeout(function () {
+
+            if (!self.moving) {
+                if (e.target === self.target && e.target !== self.svg && !self.draging) {
+                    self.showHandleBar(e.target);
+                }
+            }
+
+            self.moving = false;
+        }, 300);
 
         if (self.draging) {
             self.draging = false;
@@ -231,32 +248,19 @@ Painter.prototype.move = function (element, toX, toY) {
     // 刷新起止点
     this.moveStartX = toX;
     this.moveStartY = toY;
-
-    // 将switch 改为 if
+    
     // 圆形和椭圆是公用的
-    if (this.target.tagName == 'ellipse' || this.target.tagName == 'circle') {
-        var newX = parseInt(element.getAttribute('cx')) + parseInt(this.offsetX);
-        element.setAttribute('cx', newX);
-        var newY = parseInt(element.getAttribute('cy')) + parseInt(this.offsetY);
-        element.setAttribute('cy', newY);
-        this.diff('modify', this.target, {cx: newX, cy: newY});
-    } else if (this.target.tagName == 'rect' || this.target.tagName == 'text') {
-        var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
-        element.setAttribute('x', newX);
-        var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
-        element.setAttribute('y', newY);
-        this.diff('modify', this.target, {x: newX, y: newY});
-    } else if (this.target.tagName == 'line') {
-        var newX1 = parseInt(element.getAttribute('x1')) + parseInt(this.offsetX);
-        element.setAttribute('x1', newX1);
-        var newY1 = parseInt(element.getAttribute('y1')) + parseInt(this.offsetY);
-        element.setAttribute('y1', newY1);
-        var newX2 = parseInt(element.getAttribute('x2')) + parseInt(this.offsetX);
-        element.setAttribute('x2', newX2);
-        var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
-        element.setAttribute('y2', newY2);
-        this.diff('modify', this.target, {x1: newX1, y1: newY1, x2: newX2, y2: newY2});
-    } else if (this.target.tagName == 'path') {
+    if (this.target.tagName == 'rect' || this.target.tagName == 'text') {
+
+        var newX = parseInt(this.offsetX);
+        var newY = parseInt(this.offsetY);
+
+        this.transform('translate', newX + ' ' + newY, element);
+
+        element.setAttribute('x', parseInt(element.getAttribute('x')) + newX)
+        element.setAttribute('y', parseInt(element.getAttribute('y')) + newY)
+
+    } else {
 
         // path 比较特别,用的是 transform 来移动图形,他的 x 和 y 属性并不是自带的
         var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
@@ -485,12 +489,16 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 Painter.prototype.circle = function (cx, cy, r) {
     var attr = this.attr('cx', 'cy', 'r', arguments);
     var shape = this.fill('circle', attr, true);
+    shape.setAttribute('x', 0);
+    shape.setAttribute('y', 0);
     return shape;
 };
 
 Painter.prototype.ellipse = function (cx, cy, rx, ry) {
     var attr = this.attr('cx', 'cy', 'rx', 'ry', arguments);
     var shape = this.fill('ellipse', attr, true);
+    shape.setAttribute('x', 0);
+    shape.setAttribute('y', 0);
     return shape;
 };
 
@@ -507,6 +515,8 @@ Painter.prototype.line = function (x1, y1, x2, y2) {
     attr['stroke-width'] = this.width;
 
     var shape = this.fill('line', attr);
+    shape.setAttribute('x', 0);
+    shape.setAttribute('y', 0);
     return shape;
 };
 
