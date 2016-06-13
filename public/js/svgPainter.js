@@ -280,7 +280,7 @@ Painter.prototype.transform = function (key, value, element) {
         if (this.transformArr[i].id == element.id) {
 
             addFlag = false;
-            transformId = element.id;
+            // transformId = element.id;
 
             // 遍历 transform 数组,有则覆盖,无则新增
             var attrAddFlag = true;// 属性存在的标志
@@ -336,6 +336,15 @@ Painter.prototype.transform = function (key, value, element) {
 
     this.diff('transform', this.target, {transform: transformTxt});
 };
+
+// resize 用来在操作弹窗出现后,放大和缩小用
+Painter.prototype.resize = function (element, e) {
+    // 拿到元素
+    // 解析鼠标事件
+    // 进行操作
+    console.log(element);
+    console.log(e);
+}
 
 // 刷新一个图形,主要用来放大或者缩小
 Painter.prototype.fresh = function (element, clientX, clientY) {
