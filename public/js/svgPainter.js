@@ -108,7 +108,6 @@ var Painter = function (svgId) {
 
     this.svg.addEventListener('mouseup', function (e) {
 
-        console.log('self.moving:' + self.moving);
         setTimeout(function () {
 
             if (!self.moving) {
@@ -126,7 +125,6 @@ var Painter = function (svgId) {
 
         if (self.drawing == true) {
             self.drawing = false;
-            console.log('结束画图');
             self.tempDrawingShap = null;
         }
 
@@ -146,7 +144,6 @@ Painter.prototype.fill = function (shape, attr, isHollow, id) {
         id = this.nowId;
         this.nowId++;
     }
-
 
     var shape = document.createElementNS('http://www.w3.org/2000/svg', shape);
     shape.id = id;
@@ -171,6 +168,10 @@ Painter.prototype.fill = function (shape, attr, isHollow, id) {
         shape.setAttribute('stroke-linecap', 'round');
     }
 
+    // transform 要用到的位置偏移坐标
+    shape.setAttribute('offsetX', 0);
+    shape.setAttribute('offsetY', 0);
+
     this.svg.appendChild(shape);
     this.elements.push(shape);
 
@@ -180,7 +181,7 @@ Painter.prototype.fill = function (shape, attr, isHollow, id) {
 
 };
 
-// 每次增删改差的时候调用,比较本次和上次的差异,方便增量更新
+// 每次增删改的时候调用,将差异数据传入 diff listener
 Painter.prototype.diff = function (action, element, keyValue) {
 
     var diff = null;
@@ -223,10 +224,13 @@ Painter.prototype.diff = function (action, element, keyValue) {
             action: action
         };
     } else if (action === 'transform') {
+
         diff = {
             action: action,
             elementId: element.id,
-            data: keyValue
+            data: keyValue,
+            offsetX: element.getAttribute('offsetX'),
+            offsetY: element.getAttribute('offsetY')
         };
     }
 
@@ -236,10 +240,8 @@ Painter.prototype.diff = function (action, element, keyValue) {
 
 }
 
-// 改变x 和 y,将对应的元素移动
+// 这个函数升级为通过 offsetX 和 offsetY来设置transform
 Painter.prototype.move = function (element, toX, toY) {
-
-    var self = this;
 
     // 求 offset
     this.offsetX = toX - this.moveStartX;
@@ -249,24 +251,17 @@ Painter.prototype.move = function (element, toX, toY) {
     this.moveStartX = toX;
     this.moveStartY = toY;
 
-    // 矩形和 text 默认有 xy 那么就要转换,没有的直接拿来用
-    if (this.target.tagName == 'rect' || this.target.tagName == 'text') {
-        var newX = parseInt(this.offsetX);
-        var newY = parseInt(this.offsetY);
-        this.transform('translate', newX + ' ' + newY, element);
-        element.setAttribute('x', parseInt(element.getAttribute('x')) + newX)
-        element.setAttribute('y', parseInt(element.getAttribute('y')) + newY)
-    } else {
-        var newX = parseInt(element.getAttribute('x')) + parseInt(this.offsetX);
-        var newY = parseInt(element.getAttribute('y')) + parseInt(this.offsetY);
-        this.transform('translate', newX + ' ' + newY, element);
-        element.setAttribute('x', newX)
-        element.setAttribute('y', newY)
-    }
+    var newX = parseInt(element.getAttribute('offsetX')) + parseInt(this.offsetX);
+    var newY = parseInt(element.getAttribute('offsetY')) + parseInt(this.offsetY);
+
+    this.transform('translate', newX + ' ' + newY, element);
+
+    element.setAttribute('offsetX', newX.toString());
+    element.setAttribute('offsetY', newY.toString());
 
 }
 
-// transform 的封装,用来替代和补充move
+// transform 的封装,代替原来的 move
 Painter.prototype.transform = function (key, value, element) {
 
     // 是否新增id 和 transform 的标志位
@@ -280,7 +275,6 @@ Painter.prototype.transform = function (key, value, element) {
         if (this.transformArr[i].id == element.id) {
 
             addFlag = false;
-            // transformId = element.id;
 
             // 遍历 transform 数组,有则覆盖,无则新增
             var attrAddFlag = true;// 属性存在的标志
@@ -342,8 +336,6 @@ Painter.prototype.resize = function (element, e) {
     // 拿到元素
     // 解析鼠标事件
     // 进行操作
-    console.log(element);
-    console.log(e);
 }
 
 // 刷新一个图形,主要用来放大或者缩小
@@ -490,16 +482,12 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 Painter.prototype.circle = function (cx, cy, r) {
     var attr = this.attr('cx', 'cy', 'r', arguments);
     var shape = this.fill('circle', attr, true);
-    shape.setAttribute('x', 0);
-    shape.setAttribute('y', 0);
     return shape;
 };
 
 Painter.prototype.ellipse = function (cx, cy, rx, ry) {
     var attr = this.attr('cx', 'cy', 'rx', 'ry', arguments);
     var shape = this.fill('ellipse', attr, true);
-    shape.setAttribute('x', 0);
-    shape.setAttribute('y', 0);
     return shape;
 };
 
@@ -516,8 +504,7 @@ Painter.prototype.line = function (x1, y1, x2, y2) {
     attr['stroke-width'] = this.width;
 
     var shape = this.fill('line', attr);
-    shape.setAttribute('x', 0);
-    shape.setAttribute('y', 0);
+
     return shape;
 };
 
@@ -572,8 +559,6 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
         var shape = this.fill('path', {d: tempStr, stroke: this.color}, id);
         shape.setAttribute('stroke-width', this.width);
-        shape.setAttribute('x', 0);
-        shape.setAttribute('y', 0);
         this.nowId++;
         return shape;
 
@@ -583,6 +568,9 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
 // diff 的渲染器,得到 diff 后将 diff 绘制在图中,实现图形的同步
 Painter.prototype.drawDiff = function (diff) {
+
+    // 隐藏可能显示的 handleBar
+    this.hideHandleBar();
 
     if (diff.action === 'add') {
 
@@ -599,14 +587,10 @@ Painter.prototype.drawDiff = function (diff) {
 
         }
 
-        shape.setAttribute('fill', this.color);
-
         svg.appendChild(shape);
         this.nowId++;
 
         this.elements.push(shape);
-
-        console.log(this.elements);
 
     } else if (diff.action === 'modify') {
 
@@ -634,8 +618,14 @@ Painter.prototype.drawDiff = function (diff) {
         }
 
     } else if (diff.action === 'transform') {
+
         var ele = svg.getElementById(diff.elementId.toString());
+
+        ele.setAttribute('offsetX', diff.data.offsetX);
+        ele.setAttribute('offsetY', diff.data.offsetY);
+
         ele.setAttribute('transform', diff.data.transform);
+
     } else if (diff.action === 'clear') {
         this.clear();
     }
@@ -756,13 +746,12 @@ Painter.prototype.appendHandleBar = function () {
     // 鼠标事件初始化
     this.mask.addEventListener('click', function (e) {
         if (e.target.id !== 'handle1' && e.target.id !== 'handle2' && e.target.id !== 'handle3' && e.target.id !== 'handle4') {
-            self.mask.style.zIndex = '-1';
+            self.hideHandleBar();
         }
     }, false);
 
     // 四个 handle 的鼠标操作处理
     var mouseDownHandle = function (e) {
-        console.log('down');
         this.addEventListener('mousemove', mouseMoveHandle, false);
     }
 
@@ -771,7 +760,6 @@ Painter.prototype.appendHandleBar = function () {
     }
 
     var mouseUpHandle = function (e) {
-        console.log('up');
         this.removeEventListener('mousemove', mouseMoveHandle, false);
     }
 
@@ -807,4 +795,8 @@ Painter.prototype.showHandleBar = function (ele) {
     this.handle4.style.left = clientRect.left - 10 + 'px';
     this.handle4.style.top = clientRect.top + clientRect.height + 'px';
 
+}
+
+Painter.prototype.hideHandleBar = function () {
+    this.mask.style.zIndex = '-1';
 }

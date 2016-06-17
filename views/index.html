@@ -76,8 +76,9 @@
     });
 
     socket.on('clear', function () {
-        console.log('这里要清除画布哦');
+        console.log('这里清除了画布哦');
         painter.clear();
+        painter.hideHandleBar();
     }, false);
 
     socket.on('config', function (data) {
@@ -131,15 +132,6 @@
     file.addEventListener('click', function () {
         painter.saveAsFile();
     }, false);
-
-    // 测试 空心 circle
-    painter.circle(
-            {
-                cx: 300,
-                cy: 400,
-                r: 100
-            }
-    );
 
 </script>
 
