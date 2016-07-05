@@ -470,6 +470,8 @@ Painter.prototype.attr = function () {
 
     return attr;
 };// 计算两坐标点之间的直线距离
+
+// 计算两点之间的距离
 Painter.prototype.distance = function (x1, y1, x2, y2) {
 
     var calX = x2 - x1;
@@ -707,19 +709,19 @@ Painter.prototype.appendHandleBar = function () {
 
     // 添加四个 handlebar,从左上角顺时针
     this.handle1 = document.createElement('div');
-    this.handle1.id = 'handle1';
+    this.handle1.id = 'svg-websocket-board-handle1';
     this.handle1.style.cursor = 'nw-resize';
 
     this.handle2 = document.createElement('div');
-    this.handle2.id = 'handle2';
+    this.handle2.id = 'svg-websocket-board-handle2';
     this.handle2.style.cursor = 'ne-resize';
 
     this.handle3 = document.createElement('div');
-    this.handle3.id = 'handle3';
+    this.handle3.id = 'svg-websocket-board-handle3';
     this.handle3.style.cursor = 'se-resize';
 
     this.handle4 = document.createElement('div');
-    this.handle4.id = 'handle4';
+    this.handle4.id = 'svg-websocket-board-handle4';
     this.handle4.style.cursor = 'sw-resize';
 
     var style = {
@@ -773,6 +775,13 @@ Painter.prototype.appendHandleBar = function () {
     this.handle3.addEventListener('mouseup', mouseUpHandle, false);
     this.handle4.addEventListener('mouseup', mouseUpHandle, false);
 
+    // 添加一个边框,和四个顶点连接起来
+    this.barLine = document.createElement('div');
+    this.barLine.id = 'svg-websocket-board-bar-line';
+    this.barLine.style.position = 'absolute';
+
+    this.mask.appendChild(this.barLine);
+
 }
 
 // 这里用 div 来添加 bar 和边框
@@ -794,6 +803,14 @@ Painter.prototype.showHandleBar = function (ele) {
 
     this.handle4.style.left = clientRect.left - 10 + 'px';
     this.handle4.style.top = clientRect.top + clientRect.height + 'px';
+
+    // 首先计算宽高,然后定位左上角
+    this.barLine.style.width = clientRect.width + 10+ 'px';
+    this.barLine.style.height = clientRect.height + 10 + 'px';
+    this.barLine.style.left = clientRect.left - 5 + 'px';
+    this.barLine.style.top = clientRect.top - 5 + 'px';
+    this.barLine.style.border = '1px solid red';
+
 
 }
 
