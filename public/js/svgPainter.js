@@ -108,17 +108,6 @@ var Painter = function (svgId) {
 
     this.svg.addEventListener('mouseup', function (e) {
 
-        setTimeout(function () {
-
-            if (!self.moving) {
-                if (e.target === self.target && e.target !== self.svg && !self.draging) {
-                    self.showHandleBar(e.target);
-                }
-            }
-
-            self.moving = false;
-        }, 300);
-
         if (self.draging) {
             self.draging = false;
         }
@@ -126,6 +115,17 @@ var Painter = function (svgId) {
         if (self.drawing == true) {
             self.drawing = false;
             self.tempDrawingShap = null;
+        } else {
+            setTimeout(function () {
+
+                if (!self.moving && !self.drawing) {
+                    if (e.target === self.target && e.target !== self.svg && !self.draging) {
+                        self.showHandleBar(e.target);
+                    }
+                }
+
+                self.moving = false;
+            }, 300);
         }
 
     }, false);
@@ -779,8 +779,17 @@ Painter.prototype.appendHandleBar = function () {
     this.barLine = document.createElement('div');
     this.barLine.id = 'svg-websocket-board-bar-line';
     this.barLine.style.position = 'absolute';
-
     this.mask.appendChild(this.barLine);
+
+    // 添加一个旋转的手柄,放在边框的正中间的位置
+    this.rotateBar = document.createElement('div');
+    this.rotateBar.id = 'svg-websocket-board-rotate-bar';
+    this.rotateBar.style.position = 'absolute';
+    this.rotateBar.style.width = '20px';
+    this.rotateBar.style.height = '20px';
+    this.rotateBar.style.borderRadius = '20px';
+    this.rotateBar.style.backgroundColor = 'red';
+    this.mask.appendChild(this.rotateBar);
 
 }
 
@@ -805,12 +814,15 @@ Painter.prototype.showHandleBar = function (ele) {
     this.handle4.style.top = clientRect.top + clientRect.height + 'px';
 
     // 首先计算宽高,然后定位左上角
-    this.barLine.style.width = clientRect.width + 10+ 'px';
+    this.barLine.style.width = clientRect.width + 10 + 'px';
     this.barLine.style.height = clientRect.height + 10 + 'px';
     this.barLine.style.left = clientRect.left - 5 + 'px';
     this.barLine.style.top = clientRect.top - 5 + 'px';
     this.barLine.style.border = '1px solid red';
 
+    // 将旋转的 bar 放在矩形的中心位置
+    this.rotateBar.style.left = clientRect.left - 10 + clientRect.width / 2 + 'px';
+    this.rotateBar.style.top = clientRect.top - 10 + clientRect.height / 2 + 'px';
 
 }
 
