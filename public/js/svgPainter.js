@@ -730,7 +730,8 @@ Painter.prototype.appendHandleBar = function () {
         backgroundColor: 'white',
         border: '1px solid #333',
         boxSizing: 'border-box',
-        position: 'absolute'
+        position: 'absolute',
+        zIndex: '1200'
     };
 
     for (var i in style) {
@@ -747,18 +748,49 @@ Painter.prototype.appendHandleBar = function () {
 
     // 鼠标事件初始化
     this.mask.addEventListener('click', function (e) {
-        if (e.target.id !== 'handle1' && e.target.id !== 'handle2' && e.target.id !== 'handle3' && e.target.id !== 'handle4') {
+        // 只允许在四个方框内点击和操作,其他地方取消操作
+        if (e.target.id !== 'svg-websocket-board-handle1' && e.target.id !== 'svg-websocket-board-handle2' && e.target.id !== 'svg-websocket-board-handle3' && e.target.id !== 'svg-websocket-board-handle4') {
             self.hideHandleBar();
+        } else {
+            console.log('执行到了这里啊,等于');
         }
     }, false);
 
+
+    // 这里是对坐标的记录
+
+    // mouse down 时候的坐标缓存记录,
+    var barStartX = 0;
+    var barStartY = 0;
+    var barDiffX = 0;
+    var barDiffY = 0;
+
     // 四个 handle 的鼠标操作处理
     var mouseDownHandle = function (e) {
+        // 首先,要记录下坐标
+        barStartX = e.clientX;
+        barStartY = e.clientY;
+
         this.addEventListener('mousemove', mouseMoveHandle, false);
     }
 
     var mouseMoveHandle = function (e) {
-        console.log('move,鼠标需要跟随,并且缩放需要同步');
+        // 首先,计算偏移量,偏移量是逐渐偏移的，因而需要刷新
+
+        barStartX = e.clientX;
+        barStartY = e.clientY;
+
+        // 然后,移动小方块元素
+        barDiffX = e.clientX - barStartX;
+        barDiffY = e.clientY - barStartY;
+        console.log(barDiffX + ':' + barDiffY);
+
+        // 移动小方块和线条,是要分情况讨论的,要区分是都需要移动顶点位置
+        // 右上角不需要,先从右上角入手
+        self.handle2.style.left = parseInt(self.handle2.style.left) + barDiffX + 'px';
+        self.handle2.style.top = parseInt(self.handle2.style.top) + barDiffY + 'px';
+
+
     }
 
     var mouseUpHandle = function (e) {
@@ -779,6 +811,7 @@ Painter.prototype.appendHandleBar = function () {
     this.barLine = document.createElement('div');
     this.barLine.id = 'svg-websocket-board-bar-line';
     this.barLine.style.position = 'absolute';
+    this.barLine.style.zIndex = '1100';
     this.mask.appendChild(this.barLine);
 
     // 添加一个旋转的手柄,放在边框的正中间的位置
