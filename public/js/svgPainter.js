@@ -311,7 +311,7 @@ Painter.prototype.transform = function (key, value, element) {
         var o = {};
         o[key] = value;
 
-        this.transformArr.push({id: element.id, transform: [o]});
+        this.transformArr.push({ id: element.id, transform: [o] });
 
         tempTransformArr = [o];
 
@@ -328,7 +328,7 @@ Painter.prototype.transform = function (key, value, element) {
 
     element.setAttribute('transform', transformTxt);
 
-    this.diff('transform', this.target, {transform: transformTxt});
+    this.diff('transform', this.target, { transform: transformTxt });
 };
 
 // resize 用来在操作弹窗出现后,放大和缩小用
@@ -353,7 +353,7 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             element.setAttribute('x2', newX2);
             var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
             element.setAttribute('y2', newY2);
-            this.diff('modify', element, {x2: newX2, y2: newY2});
+            this.diff('modify', element, { x2: newX2, y2: newY2 });
             break;
 
         case 'rect':
@@ -362,13 +362,13 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             element.setAttribute('width', newWidth);
             var newHeight = Math.abs(parseInt(element.getAttribute('y')) + this.offsetY - this.drawStartY);
             element.setAttribute('height', newHeight);
-            this.diff('modify', element, {width: newWidth, height: newHeight});
+            this.diff('modify', element, { width: newWidth, height: newHeight });
             break;
 
         case 'circle':
             var newR = this.distance(this.drawStartX, this.drawStartY, clientX, clientY);
             element.setAttribute('r', newR);
-            this.diff('modify', element, {r: newR});
+            this.diff('modify', element, { r: newR });
             break;
 
         case 'ellipse':
@@ -376,7 +376,7 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             element.setAttribute('rx', newWidth);
             var newHeight = Math.abs(parseInt(element.getAttribute('cy')) + this.offsetY - this.drawStartY);
             element.setAttribute('ry', newHeight);
-            this.diff('modify', element, {rx: newWidth, ry: newHeight});
+            this.diff('modify', element, { rx: newWidth, ry: newHeight });
             break;
 
         case 'path':
@@ -531,7 +531,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
             if (this.pathArr[i].id == path.id) {
 
-                this.pathArr[i].d.push({mx: x, my: y, lx: toX, ly: toY});
+                this.pathArr[i].d.push({ mx: x, my: y, lx: toX, ly: toY });
 
                 var d = path.getAttribute('d');
                 d += ' m ' + x + ' ' + y;
@@ -539,7 +539,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
                 path.setAttribute('d', d);
 
-                this.diff('modify', path, {mx: x, my: y, lx: toX, ly: toY});
+                this.diff('modify', path, { mx: x, my: y, lx: toX, ly: toY });
 
             }
         }
@@ -553,13 +553,13 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         var data = {};
         data.id = id;
         data.d = [];
-        data.d.push({mx: x, my: y, lx: toX, ly: toY});
+        data.d.push({ mx: x, my: y, lx: toX, ly: toY });
         this.pathArr.push(data);
 
         tempStr += ' m ' + x + ' ' + y;
         tempStr += ' l ' + toX + ' ' + toY;
 
-        var shape = this.fill('path', {d: tempStr, stroke: this.color}, id);
+        var shape = this.fill('path', { d: tempStr, stroke: this.color }, id);
         shape.setAttribute('stroke-width', this.width);
         this.nowId++;
         return shape;
@@ -746,72 +746,97 @@ Painter.prototype.appendHandleBar = function () {
     this.mask.appendChild(this.handle3);
     this.mask.appendChild(this.handle4);
 
+
+
+    /**
+     * 以下是对操作 bar 的鼠标处理
+     */
+    // bar 操作所需要的变量
+    var maskMouseMoveHandler = function (e) {
+        console.log(e);
+    }
+
     // 鼠标事件初始化
-    this.mask.addEventListener('click', function (e) {
+    this.mask.addEventListener('mousedown', function (e) {
+
         // 只允许在四个方框内点击和操作,其他地方取消操作
         if (e.target.id !== 'svg-websocket-board-handle1' && e.target.id !== 'svg-websocket-board-handle2' && e.target.id !== 'svg-websocket-board-handle3' && e.target.id !== 'svg-websocket-board-handle4') {
             self.hideHandleBar();
-        } else {
-            console.log('执行到了这里啊,等于');
+        }
+
+        else //执行到了这里啊,等于,那么就要处理四个定点拉 
+        {
+
+            // 第二个定点比较简单，先处理这个
+            if (e.target.id == 'svg-websocket-board-handle2') {
+
+                // 添加鼠标移动的处理
+                self.mask.addEventListener('mousemove', maskMouseMoveHandler, false);
+
+            }
+
         }
     }, false);
 
-
-    // 这里是对坐标的记录
-
-    // mouse down 时候的坐标缓存记录,
-    var barStartX = 0;
-    var barStartY = 0;
-    var barDiffX = 0;
-    var barDiffY = 0;
-    var barStartLeft = 0;
-    var barStartTop = 0;
+    // 在鼠标抬起的时候，我们移除鼠标的移动事件
+    this.mask.addEventListener('mouseup', function (e) {
+        self.mask.removeEventListener('mousemove', maskMouseMoveHandler, false);
+        console.log('移除了');
+    }, false);
 
 
-    // 四个 handle 的鼠标操作处理
-    var mouseDownHandle = function (e) {
-        // 首先,要记录下坐标
-        barStartX = e.clientX;
-        barStartY = e.clientY;
-
-        // 鼠标 down 的时候刷新 left 和 top
-        barStartLeft = parseInt(self.handle2.style.left);
-        barStartTop = parseInt(self.handle2.style.top);
-
-
-        this.addEventListener('mousemove', mouseMoveHandle, false);
-    }
-
-    var mouseMoveHandle = function (e) {
-        
-        // 首先,计算偏移量
-        // 然后,移动小方块元素
-        barDiffX = e.clientX - barStartX;
-        barDiffY = e.clientY - barStartY;
-        console.log(barDiffX + ':' + barDiffY);
-
-        // 移动小方块和线条,是要分情况讨论的,要区分是都需要移动顶点位置
-        // 右上角不需要,先从右上角入手
-        console.log(parseInt(self.handle2.style.left));
-        self.handle2.style.left = barStartLeft + barDiffX + 'px';
-        self.handle2.style.top = barStartTop + barDiffY + 'px';
+    // 注释掉下面四个点的坐标，将时间绑定移到 mask 上，否则鼠标会很容易就出去了
+    // // 这里是对坐标的记录
+    // // mouse down 时候的坐标缓存记录,
+    // var barStartX = 0;
+    // var barStartY = 0;
+    // var barDiffX = 0;
+    // var barDiffY = 0;
+    // var barStartLeft = 0;
+    // var barStartTop = 0;
 
 
-    }
+    // // 四个 handle 的鼠标操作处理
+    // var mouseDownHandle = function (e) {
+    //     // 首先,要记录下坐标
+    //     barStartX = e.clientX;
+    //     barStartY = e.clientY;
 
-    var mouseUpHandle = function (e) {
-        this.removeEventListener('mousemove', mouseMoveHandle, false);
-    }
+    //     // 鼠标 down 的时候刷新 left 和 top
+    //     barStartLeft = parseInt(self.handle2.style.left);
+    //     barStartTop = parseInt(self.handle2.style.top);
 
-    this.handle1.addEventListener('mousedown', mouseDownHandle, false);
-    this.handle2.addEventListener('mousedown', mouseDownHandle, false);
-    this.handle3.addEventListener('mousedown', mouseDownHandle, false);
-    this.handle4.addEventListener('mousedown', mouseDownHandle, false);
 
-    this.handle1.addEventListener('mouseup', mouseUpHandle, false);
-    this.handle2.addEventListener('mouseup', mouseUpHandle, false);
-    this.handle3.addEventListener('mouseup', mouseUpHandle, false);
-    this.handle4.addEventListener('mouseup', mouseUpHandle, false);
+    //     this.addEventListener('mousemove', mouseMoveHandle, false);
+    // }
+
+    // var mouseMoveHandle = function (e) {
+
+    //     // 首先,计算偏移量
+    //     // 然后,移动小方块元素
+    //     barDiffX = e.clientX - barStartX;
+
+    //     // 移动小方块和线条,是要分情况讨论的,要区分是都需要移动顶点位置
+    //     // 右上角不需要,先从右上角入手
+    //     self.handle2.style.left = barStartLeft + barDiffX + 'px';
+    //     self.handle2.style.top = barStartTop + barDiffY + 'px';
+
+    // }
+
+    // var mouseUpHandle = function (e) {
+    //     console.log('mouse up');
+    //     this.removeEventListener('mousemove', mouseMoveHandle, false);
+    // }
+
+    // this.handle1.addEventListener('mousedown', mouseDownHandle, false);
+    // this.handle2.addEventListener('mousedown', mouseDownHandle, false);
+    // this.handle3.addEventListener('mousedown', mouseDownHandle, false);
+    // this.handle4.addEventListener('mousedown', mouseDownHandle, false);
+
+    // this.handle1.addEventListener('mouseup', mouseUpHandle, false);
+    // this.handle2.addEventListener('mouseup', mouseUpHandle, false);
+    // this.handle3.addEventListener('mouseup', mouseUpHandle, false);
+    // this.handle4.addEventListener('mouseup', mouseUpHandle, false);
 
     // 添加一个边框,和四个顶点连接起来
     this.barLine = document.createElement('div');
