@@ -764,6 +764,9 @@ Painter.prototype.appendHandleBar = function () {
     var barStartY = 0;
     var barDiffX = 0;
     var barDiffY = 0;
+    var barStartLeft = 0;
+    var barStartTop = 0;
+
 
     // 四个 handle 的鼠标操作处理
     var mouseDownHandle = function (e) {
@@ -771,15 +774,17 @@ Painter.prototype.appendHandleBar = function () {
         barStartX = e.clientX;
         barStartY = e.clientY;
 
+        // 鼠标 down 的时候刷新 left 和 top
+        barStartLeft = parseInt(self.handle2.style.left);
+        barStartTop = parseInt(self.handle2.style.top);
+
+
         this.addEventListener('mousemove', mouseMoveHandle, false);
     }
 
     var mouseMoveHandle = function (e) {
-        // 首先,计算偏移量,偏移量是逐渐偏移的，因而需要刷新
-
-        barStartX = e.clientX;
-        barStartY = e.clientY;
-
+        
+        // 首先,计算偏移量
         // 然后,移动小方块元素
         barDiffX = e.clientX - barStartX;
         barDiffY = e.clientY - barStartY;
@@ -787,8 +792,9 @@ Painter.prototype.appendHandleBar = function () {
 
         // 移动小方块和线条,是要分情况讨论的,要区分是都需要移动顶点位置
         // 右上角不需要,先从右上角入手
-        self.handle2.style.left = parseInt(self.handle2.style.left) + barDiffX + 'px';
-        self.handle2.style.top = parseInt(self.handle2.style.top) + barDiffY + 'px';
+        console.log(parseInt(self.handle2.style.left));
+        self.handle2.style.left = barStartLeft + barDiffX + 'px';
+        self.handle2.style.top = barStartTop + barDiffY + 'px';
 
 
     }
