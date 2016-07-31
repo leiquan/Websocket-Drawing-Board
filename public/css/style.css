@@ -9,22 +9,28 @@
     background-color:rgba(0, 0, 0, 0.701961);
     margin: 0;
     box-sizing: border-box;
+    background-color: #08080a;
 }
 
 .tool-box .item {
     width: 50px;
     height: 40px;
     float: left;
-    box-shadow: inset 0 0 20px orange;
-    background-color: red;
+    /*box-shadow: inset 0 0 20px orange;*/
+    /*background-color: red;*/
     text-align: center;
     line-height: 40px;
-    margin-left: 25px;
-    margin-right: 25px;
+    margin-left: 35px;
+    margin-right: 35px;
     color: white;
     font-size: 14px;
     cursor: pointer;
     position: relative;
+}
+.iconfont {
+    width: 50px;
+    height: 40px;
+    display: block;
 }
 
 #svg {
@@ -34,12 +40,17 @@
     height: 500px;
 }
 
+
+
 .menu {
     width: 50px;
     height: auto;
     background-color: #ddd;
     position: absolute;
-    top: 40px;
+    bottom: 40px;
+    display: none;
+    background-color: #08080a;
+    opacity: 0.8;
 }
 
 .menu .child{

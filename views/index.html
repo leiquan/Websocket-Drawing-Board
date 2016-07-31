@@ -6,6 +6,7 @@
     <script src="js/socket.io-1.4.5.js"></script>
     <script src="js/svgPainter.js"></script>
     <link href="css/style.css" rel="stylesheet">
+    <link href="iconfont/iconfont.css" rel="stylesheet">
 </head>
 
 <body>
@@ -14,23 +15,26 @@
 
 <div class="tool-box">
     <div class="item">
+        <i class="icon iconfont">&#xe603;</i>
         <div class="menu">
             <div class="child">200%</div>
             <div class="child">100%</div>
             <div class="child">50%</div>
         </div>
-        缩放
+        <!--缩放-->
     </div>
     <div class="item">
+        <i class="icon iconfont">&#xe602;</i>
         <div class="menu" id="color-selector">
             <div class="child" id="red">红</div>
             <div class="child" id="green">绿</div>
             <div class="child" id="blue">蓝</div>
             <div class="child" id="black">黑</div>
         </div>
-        颜色
+        <!--颜色-->
     </div>
     <div class="item">
+        <i class="icon iconfont">&#xe600;</i>
         <div class="menu" id="shape-selector">
             <div class="child" id="path">铅笔</div>
             <div class="child" id="text">文字</div>
@@ -39,22 +43,24 @@
             <div class="child" id="circle">圆形</div>
             <div class="child" id="ellipse">椭圆</div>
         </div>
-        画笔
+        <!--画笔-->
     </div>
     <div class="item">
+        <i class="icon iconfont">&#xe604;</i>
         <div class="menu">
             <div class="child">粗体</div>
             <div class="child">斜体</div>
             <div class="child">下划线</div>
         </div>
-        文字
+        <!--文字-->
     </div>
     <div class="item">
+        <i class="icon iconfont">&#xe601;</i>
         <div class="menu">
             <div class="child" id="clear">清空画布</div>
             <div class="child" id="file"> 导出</div>
         </div>
-        工具
+        <!--工具-->
     </div>
 </div>
 
@@ -132,6 +138,32 @@
     file.addEventListener('click', function () {
         painter.saveAsFile();
     }, false);
+
+    // 菜单展示和隐藏
+    var items = document.getElementsByClassName('item');
+
+    for (var i = 0; i < items.length; i++) {
+
+        (function (i) {
+            items[i].addEventListener('click', function (e) {
+
+                console.log(e);
+
+                if (e.target.className == 'icon iconfont') {
+
+                    if (getComputedStyle(e.target.nextElementSibling).display == 'none') {
+                        e.target.nextElementSibling.style.display = 'block'
+                    } else {
+                        e.target.nextElementSibling.style.display = 'none'
+                    }
+
+                }
+
+            }, false);
+
+        })(i);
+
+    }
 
 </script>
 
