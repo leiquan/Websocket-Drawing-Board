@@ -45,6 +45,8 @@ var Painter = function (svgId) {
     this.handle3 = null;
     this.handle4 = null;
     this.handle5 = null;
+    this.barLineHeight = 0;
+    this.barLineWidth = 0;
 
     this.rotateCenter = {x: 0, y: 0}; //当前选中图形的中心坐标,作为起点用来计算旋转斜率
 
@@ -266,15 +268,44 @@ Painter.prototype.move = function (element, toX, toY) {
 
 
 // 旋转某个元素
-Painter.prototype.rotate = function (element, deg) {
+Painter.prototype.rotate = function (element, deg, x, y) {
+    var x = x + 5;
+    var y = y + 5;
+    this.transform('rotate', deg + ' ' + x  +' ' + y, element);
+    this.barLine.style.transform = 'rotate(' + deg + 'deg)';
+    this.rotateBar.style.transform = 'rotate(' + deg + 'deg)';
 
-    this.transform('rotate', deg, element);
+
+
+    //this.handle1.style.width = this.barLineWidth / 2 + 10 + 'px';
+    //this.handle1.style.height = this.barLineHeight / 2 + 10 + 'px';
+
+    this.handle1.style.transform = 'rotate(' + deg + 'deg)';
+    this.handle2.style.transform = 'rotate(' + deg + 'deg)';
+    this.handle3.style.transform = 'rotate(' + deg + 'deg)';
+    this.handle4.style.transform = 'rotate(' + deg + 'deg)';
+    this.handle5.style.transform = 'rotate(' + deg + 'deg)';
+    //this.handle2.style.transform = 'rotate(' + deg + 'deg)';
+    //this.handle2.style.transformOrigin = (this.barLineWidth + 10)/2 + 'px ' + (this.barLineWidth + 10)/2  + 'px';
+    //
+    //this.handle3.style.transform = 'rotate(' + deg + 'deg)';
+    //this.handle3.style.transformOrigin = (this.barLineWidth + 10)/2 + 'px ' + (this.barLineWidth + 10)/2  + 'px';
+    //
+    //this.handle4.style.transform = 'rotate(' + deg + 'deg)';
+    //this.handle4.style.transformOrigin = (this.barLineWidth + 10)/2 + 'px ' + (this.barLineWidth + 10)/2  + 'px';
+
+
+
 }
 
 // 设置 transform origin,用来在旋转的时候设定基点
 Painter.prototype.transformOrigin = function (x, y, element) {
+
+    console.log('这里打印的是 origin.');
+
     //this.diff('transform', this.target, {transform: transformTxt});
     element.style.transformOrigin = x + ' ' + y;
+    element.style.transformOrigin = '50% 50%';
 
 };
 
@@ -845,7 +876,9 @@ Painter.prototype.appendHandleBar = function () {
 
         var deg = self.deg(self.rotateCenter.x, self.rotateCenter.y, barEndX, barEndY);
 
-        self.rotate(self.target, deg);
+        //self.transformOrigin(self.rotateCenter.x, self.rotateCenter.y, self.target);
+
+        self.rotate(self.target, deg, self.rotateCenter.x, self.rotateCenter.y);
     }
 
     // 鼠标事件初始化
@@ -974,20 +1007,44 @@ Painter.prototype.showHandleBar = function (ele) {
     var clientRect = ele.getBoundingClientRect();
 
     // 顺时针旋转
+
+    // 四个按钮旋转的便宜,第一个
+    var x1 = clientRect.width / 2 + 10;
+    var y1 = clientRect.height/2 + 10;
     this.handle1.style.left = clientRect.left - 10 + 'px';
     this.handle1.style.top = clientRect.top - 10 + 'px';
+    this.handle1.style.transformOrigin =  x1 + 'px '  +  y1 + 'px';
 
+
+    // 四个按钮旋转的便宜,第2个
+    var x2 = clientRect.width / 2 ;
+    var y2 = clientRect.height/2 + 10;
     this.handle2.style.left = clientRect.left + clientRect.width + 'px';
     this.handle2.style.top = clientRect.top - 10 + 'px';
+    this.handle2.style.transformOrigin =  -x2 + 'px '  +  y2 + 'px';
 
+
+    // 四个按钮旋转的便宜,第2个
+    var x3 = clientRect.width / 2;
+    var y3 = clientRect.height/2;
     this.handle3.style.left = clientRect.left + clientRect.width + 'px';
     this.handle3.style.top = clientRect.top + clientRect.height + 'px';
+    this.handle3.style.transformOrigin =  -x3 + 'px '  +  -y3 + 'px';
 
+    // 四个按钮旋转的便宜,第2个
+    var x4 = clientRect.width / 2 + 10;
+    var y4 = clientRect.height/2;
     this.handle4.style.left = clientRect.left - 10 + 'px';
     this.handle4.style.top = clientRect.top + clientRect.height + 'px';
+    this.handle4.style.transformOrigin =  x4 + 'px '  +  -y4 + 'px';
 
+
+    // 四个按钮旋转的便宜,第2个
+    var x5 = 5;
+    var y5 = clientRect.height/2 + 10;
     this.handle5.style.left = clientRect.left - 5 + clientRect.width / 2 + 'px';
     this.handle5.style.top = clientRect.top - 10 + 'px';
+    this.handle5.style.transformOrigin =  x5 + 'px '  +  y5 + 'px';
 
     // 首先计算宽高,然后定位左上角
     this.barLine.style.width = clientRect.width + 10 + 'px';
@@ -995,6 +1052,9 @@ Painter.prototype.showHandleBar = function (ele) {
     this.barLine.style.left = clientRect.left - 5 + 'px';
     this.barLine.style.top = clientRect.top - 5 + 'px';
     this.barLine.style.border = '1px solid red';
+
+    this.barLineWidth = clientRect.width;
+    this.barLineHeight = clientRect.height;
 
     // 将旋转的 bar 放在矩形的中心位置
     this.rotateBar.style.left = clientRect.left - 10 + clientRect.width / 2 + 'px';
