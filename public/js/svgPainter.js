@@ -44,6 +44,9 @@ var Painter = function (svgId) {
     this.handle2 = null;
     this.handle3 = null;
     this.handle4 = null;
+    this.handle5 = null;
+
+    this.rotateCenter = {x: 0, y: 0}; //当前选中图形的中心坐标,作为起点用来计算旋转斜率
 
     // diff 监听器,会在图形有变动的时候,将 diff 传入函数的参数
     this.onDiff = null;
@@ -261,6 +264,20 @@ Painter.prototype.move = function (element, toX, toY) {
 
 }
 
+
+// 旋转某个元素
+Painter.prototype.rotate = function (element, deg) {
+
+    this.transform('rotate', deg, element);
+}
+
+// 设置 transform origin,用来在旋转的时候设定基点
+Painter.prototype.transformOrigin = function (x, y, element) {
+    //this.diff('transform', this.target, {transform: transformTxt});
+    element.style.transformOrigin = x + ' ' + y;
+
+};
+
 // transform 的封装,代替原来的 move
 Painter.prototype.transform = function (key, value, element) {
 
@@ -311,7 +328,7 @@ Painter.prototype.transform = function (key, value, element) {
         var o = {};
         o[key] = value;
 
-        this.transformArr.push({ id: element.id, transform: [o] });
+        this.transformArr.push({id: element.id, transform: [o]});
 
         tempTransformArr = [o];
 
@@ -328,7 +345,7 @@ Painter.prototype.transform = function (key, value, element) {
 
     element.setAttribute('transform', transformTxt);
 
-    this.diff('transform', this.target, { transform: transformTxt });
+    this.diff('transform', this.target, {transform: transformTxt});
 };
 
 // resize 用来在操作弹窗出现后,放大和缩小用
@@ -353,7 +370,7 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             element.setAttribute('x2', newX2);
             var newY2 = parseInt(element.getAttribute('y2')) + parseInt(this.offsetY);
             element.setAttribute('y2', newY2);
-            this.diff('modify', element, { x2: newX2, y2: newY2 });
+            this.diff('modify', element, {x2: newX2, y2: newY2});
             break;
 
         case 'rect':
@@ -362,13 +379,13 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             element.setAttribute('width', newWidth);
             var newHeight = Math.abs(parseInt(element.getAttribute('y')) + this.offsetY - this.drawStartY);
             element.setAttribute('height', newHeight);
-            this.diff('modify', element, { width: newWidth, height: newHeight });
+            this.diff('modify', element, {width: newWidth, height: newHeight});
             break;
 
         case 'circle':
             var newR = this.distance(this.drawStartX, this.drawStartY, clientX, clientY);
             element.setAttribute('r', newR);
-            this.diff('modify', element, { r: newR });
+            this.diff('modify', element, {r: newR});
             break;
 
         case 'ellipse':
@@ -376,7 +393,7 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             element.setAttribute('rx', newWidth);
             var newHeight = Math.abs(parseInt(element.getAttribute('cy')) + this.offsetY - this.drawStartY);
             element.setAttribute('ry', newHeight);
-            this.diff('modify', element, { rx: newWidth, ry: newHeight });
+            this.diff('modify', element, {rx: newWidth, ry: newHeight});
             break;
 
         case 'path':
@@ -481,6 +498,60 @@ Painter.prototype.distance = function (x1, y1, x2, y2) {
 
 }
 
+
+Painter.prototype.deg = function (x1, y1, x2, y2) {
+
+    // 参数意义, x1 和 y1 为旋转中心, x2 和 y2为鼠标坐标
+
+    // 先求斜率
+    var ox = x2 - x1;
+    var oy = y2 - y1;
+
+    var to = Math.abs(ox / oy);
+
+    //鼠标相对于旋转中心的角度
+    var angle = Math.atan(to) / ( 2 * Math.PI ) * 360;
+
+    //相对在左上角，第四象限，js中坐标系是从左上角开始的，这里的象限是正常坐标系
+    if (ox < 0 && oy < 0) {
+        angle = 360 - angle
+    }
+
+    //左下角,3象限
+    else if (ox < 0 && oy > 0) {
+        angle = 180 + angle
+    }
+
+    //右上角，1象限
+    else if (ox > 0 && oy < 0) {
+        angle = angle;
+    }
+
+    //右下角，2象限
+    else if (ox > 0 && oy > 0) {
+        angle = 180 - angle;
+
+        console.log('这里');
+    }
+
+    return angle;
+
+}
+
+// 计算两点组成的直线到水平线的斜率
+Painter.prototype.slope = function (x1, y1, x2, y2) {
+    // 斜率定义 k=tanα=（y2-y1）/（x2-x1）
+    // x1和 x2是旋转中心点,y1和 y2是鼠标操作点,两点构成直线形成斜率
+    // 斜率
+    var k = (y2 - y1) / (x2 - x1);
+
+    //根据斜率求角度
+    var t = Math.atan(Math.abs(k / 1)) / Math.PI * 180;
+
+    //保留两位数的斜率
+    return t;
+};
+
 Painter.prototype.circle = function (cx, cy, r) {
     var attr = this.attr('cx', 'cy', 'r', arguments);
     var shape = this.fill('circle', attr, true);
@@ -531,7 +602,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
             if (this.pathArr[i].id == path.id) {
 
-                this.pathArr[i].d.push({ mx: x, my: y, lx: toX, ly: toY });
+                this.pathArr[i].d.push({mx: x, my: y, lx: toX, ly: toY});
 
                 var d = path.getAttribute('d');
                 d += ' m ' + x + ' ' + y;
@@ -539,7 +610,7 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
 
                 path.setAttribute('d', d);
 
-                this.diff('modify', path, { mx: x, my: y, lx: toX, ly: toY });
+                this.diff('modify', path, {mx: x, my: y, lx: toX, ly: toY});
 
             }
         }
@@ -553,13 +624,13 @@ Painter.prototype.path = function (x, y, toX, toY, path) {
         var data = {};
         data.id = id;
         data.d = [];
-        data.d.push({ mx: x, my: y, lx: toX, ly: toY });
+        data.d.push({mx: x, my: y, lx: toX, ly: toY});
         this.pathArr.push(data);
 
         tempStr += ' m ' + x + ' ' + y;
         tempStr += ' l ' + toX + ' ' + toY;
 
-        var shape = this.fill('path', { d: tempStr, stroke: this.color }, id);
+        var shape = this.fill('path', {d: tempStr, stroke: this.color}, id);
         shape.setAttribute('stroke-width', this.width);
         this.nowId++;
         return shape;
@@ -724,6 +795,11 @@ Painter.prototype.appendHandleBar = function () {
     this.handle4.id = 'svg-websocket-board-handle4';
     this.handle4.style.cursor = 'sw-resize';
 
+    // 这是旋转的操作手柄
+    this.handle5 = document.createElement('div');
+    this.handle5.id = 'svg-websocket-board-handle5';
+    this.handle5.style.cursor = 'move';
+
     var style = {
         width: "10px",
         height: "10px",
@@ -739,33 +815,47 @@ Painter.prototype.appendHandleBar = function () {
         this.handle2.style[i] = style[i];
         this.handle3.style[i] = style[i];
         this.handle4.style[i] = style[i];
+        this.handle5.style[i] = style[i];
     }
+
+    this.handle5.style.borderRadius = '10px';
 
     this.mask.appendChild(this.handle1);
     this.mask.appendChild(this.handle2);
     this.mask.appendChild(this.handle3);
     this.mask.appendChild(this.handle4);
-
+    this.mask.appendChild(this.handle5);
 
 
     /**
      * 以下是对操作 bar 的鼠标处理
      */
     // bar 操作所需要的变量
+    // 统一变量,例如 bar 起点坐标,重点坐标,等等
+    var barStartX = 0;
+    var barStartY = 0;
+    var barEndX = 0;
+    var barEndY = 0;
     var maskMouseMoveHandler = function (e) {
-        console.log(e);
+        //console.log(e);
+        barEndX = e.clientX;
+        barEndY = e.clientY;
+
+        // 鼠标拉动计算旋转斜率
+
+        var deg = self.deg(self.rotateCenter.x, self.rotateCenter.y, barEndX, barEndY);
+
+        self.rotate(self.target, deg);
     }
 
     // 鼠标事件初始化
     this.mask.addEventListener('mousedown', function (e) {
 
-        // 只允许在四个方框内点击和操作,其他地方取消操作
-        if (e.target.id !== 'svg-websocket-board-handle1' && e.target.id !== 'svg-websocket-board-handle2' && e.target.id !== 'svg-websocket-board-handle3' && e.target.id !== 'svg-websocket-board-handle4') {
-            self.hideHandleBar();
-        }
+        barStartX = e.clientX;
+        barStartY = e.clientY;
 
-        else //执行到了这里啊,等于,那么就要处理四个定点拉 
-        {
+        // 只允许在四个方框内点击和操作,其他地方取消操作
+        if (e.target.id == 'svg-websocket-board-handle1' || e.target.id == 'svg-websocket-board-handle2' || e.target.id == 'svg-websocket-board-handle3' || e.target.id == 'svg-websocket-board-handle4' || e.target.id == 'svg-websocket-board-handle5') {
 
             // 第二个定点比较简单，先处理这个
             if (e.target.id == 'svg-websocket-board-handle2') {
@@ -775,13 +865,30 @@ Painter.prototype.appendHandleBar = function () {
 
             }
 
+            // 旋转处理,计算起点终点的倾斜角,以中心坐标和鼠标位置构成的方向直线为斜率
+            if (e.target.id == 'svg-websocket-board-handle5') {
+
+                console.log('得到旋转中心的坐标:' + self.rotateCenter.x + ':' + self.rotateCenter.y);
+
+                // 添加鼠标移动的处理
+                self.mask.addEventListener('mousemove', maskMouseMoveHandler, false);
+
+            }
+
         }
+
+        else //隐藏菜单
+        {
+            self.hideHandleBar();
+        }
+
     }, false);
 
     // 在鼠标抬起的时候，我们移除鼠标的移动事件
     this.mask.addEventListener('mouseup', function (e) {
         self.mask.removeEventListener('mousemove', maskMouseMoveHandler, false);
-        console.log('移除了');
+        barEndX = e.clientX;
+        barEndY = e.clientY;
     }, false);
 
 
@@ -848,6 +955,7 @@ Painter.prototype.appendHandleBar = function () {
     // 添加一个旋转的手柄,放在边框的正中间的位置
     this.rotateBar = document.createElement('div');
     this.rotateBar.id = 'svg-websocket-board-rotate-bar';
+    this.rotateBar.style.zIndex = '1200';
     this.rotateBar.style.position = 'absolute';
     this.rotateBar.style.width = '20px';
     this.rotateBar.style.height = '20px';
@@ -878,6 +986,9 @@ Painter.prototype.showHandleBar = function (ele) {
     this.handle4.style.left = clientRect.left - 10 + 'px';
     this.handle4.style.top = clientRect.top + clientRect.height + 'px';
 
+    this.handle5.style.left = clientRect.left - 5 + clientRect.width / 2 + 'px';
+    this.handle5.style.top = clientRect.top - 10 + 'px';
+
     // 首先计算宽高,然后定位左上角
     this.barLine.style.width = clientRect.width + 10 + 'px';
     this.barLine.style.height = clientRect.height + 10 + 'px';
@@ -888,6 +999,9 @@ Painter.prototype.showHandleBar = function (ele) {
     // 将旋转的 bar 放在矩形的中心位置
     this.rotateBar.style.left = clientRect.left - 10 + clientRect.width / 2 + 'px';
     this.rotateBar.style.top = clientRect.top - 10 + clientRect.height / 2 + 'px';
+
+    // 为当前图形的中心坐标赋值
+    this.rotateCenter = {x: clientRect.left - 5 + clientRect.width / 2, y: clientRect.top - 5 + clientRect.height / 2};
 
 }
 
