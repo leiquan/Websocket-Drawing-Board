@@ -421,6 +421,12 @@ Painter.prototype.fresh = function (element, clientX, clientY) {
             break;
 
     }
+
+    // 这里有个重要的步骤,那就是,刷新图像的初始大小值,这里的值要记录在属性上,用来在 scale 的时候
+    var clientRect = element.getBoundingClientRect();
+    element.setAttribute('initWidth', clientRect.width);
+    element.setAttribute('initHeight', clientRect.height);
+
 };
 
 // 不同的图形,在处理上并不一样,并且这里只要一个图形的instance
@@ -549,8 +555,6 @@ Painter.prototype.deg = function (x1, y1, x2, y2) {
     //右下角，2象限
     else if (ox > 0 && oy > 0) {
         angle = 180 - angle;
-
-        console.log('这里');
     }
 
     return angle;
@@ -828,7 +832,6 @@ Painter.prototype.appendHandleBar = function () {
     this.rotateLine.style.backgroundColor = 'red';
 
 
-
     var style = {
         width: "10px",
         height: "10px",
@@ -866,7 +869,10 @@ Painter.prototype.appendHandleBar = function () {
     var barStartY = 0;
     var barEndX = 0;
     var barEndY = 0;
-    var maskMouseMoveHandler = function (e) {
+    var handleFlag = null; //正在监听的 handle,根据此标志,鼠标抬起时取消监听
+
+    // 旋转处理
+    var maskMouseMoveRotateHandler = function (e) {
         //console.log(e);
         barEndX = e.clientX;
         barEndY = e.clientY;
@@ -878,6 +884,43 @@ Painter.prototype.appendHandleBar = function () {
         //self.transformOrigin(self.rotateCenter.x, self.rotateCenter.y, self.target);
 
         self.rotate(self.target, deg, self.rotateCenter.x, self.rotateCenter.y);
+    }
+
+    // 缩放处理
+    var maskMouseMoveScaleHandler = function (e) {
+
+        barEndX = e.clientX;
+        barEndY = e.clientY;
+
+        // 准备计算,然后放大缩小了
+        console.log(e);
+        console.log('这里应该需要计算顶点了');
+
+        // 首先,根据中心点,和鼠标位置,得到长宽,之所以用中心点,是因为不用分四个点的情况
+        // 然后,根据记录的初始属性值,计算得到比例
+
+        // 还是要根据外框计算中心点
+        var centerPosition = {x: 0, y: 0};
+        centerPosition.x = parseInt(getComputedStyle(self.barLine).left) + parseInt(getComputedStyle(self.barLine).width) / 2;
+        centerPosition.y = parseInt(getComputedStyle(self.barLine).top) + parseInt(getComputedStyle(self.barLine).height) / 2;
+
+        var newMoveWidth = (barEndX - centerPosition.x) * 2;
+        var newMoveHeight = (barEndY - centerPosition.y) * 2;
+
+        var scaleX = Math.abs(newMoveWidth / self.target.getAttribute('initWidth'));
+        var scaleY = Math.abs(newMoveHeight / self.target.getAttribute('initHeight'));
+
+        console.log(scaleX + ':' + scaleY);
+
+        self.transform('scale', scaleX + ' ' + scaleY, self.target)
+
+
+        //var x2 = clientRect.width / 2;
+        //var y2 = clientRect.height / 2 + 10;
+        //this.handle2.style.left = clientRect.left + clientRect.width + 'px';
+        //this.handle2.style.top = clientRect.top - 10 + 'px';
+
+
     }
 
     // 鼠标事件初始化
@@ -893,17 +936,18 @@ Painter.prototype.appendHandleBar = function () {
             if (e.target.id == 'svg-websocket-board-handle2') {
 
                 // 添加鼠标移动的处理
-                self.mask.addEventListener('mousemove', maskMouseMoveHandler, false);
+                self.mask.addEventListener('mousemove', maskMouseMoveScaleHandler, false);
 
             }
 
             // 旋转处理,计算起点终点的倾斜角,以中心坐标和鼠标位置构成的方向直线为斜率
-            if (e.target.id == 'svg-websocket-board-handle5') {
+            else if (e.target.id == 'svg-websocket-board-handle5') {
 
                 console.log('得到旋转中心的坐标:' + self.rotateCenter.x + ':' + self.rotateCenter.y);
 
                 // 添加鼠标移动的处理
-                self.mask.addEventListener('mousemove', maskMouseMoveHandler, false);
+                self.mask.addEventListener('mousemove', maskMouseMoveRotateHandler, false);
+                handleFlag = maskMouseMoveRotateHandler;
 
             }
 
@@ -918,7 +962,8 @@ Painter.prototype.appendHandleBar = function () {
 
     // 在鼠标抬起的时候，我们移除鼠标的移动事件
     this.mask.addEventListener('mouseup', function (e) {
-        self.mask.removeEventListener('mousemove', maskMouseMoveHandler, false);
+
+        self.mask.removeEventListener('mousemove', handleFlag, false);
         barEndX = e.clientX;
         barEndY = e.clientY;
     }, false);
@@ -1056,13 +1101,12 @@ Painter.prototype.showHandleBar = function (ele) {
     this.barLineHeight = clientRect.height;
 
 
-
     var x6 = 0;
-    var y6 = clientRect.height/2 + 5 + 20;
+    var y6 = clientRect.height / 2 + 5 + 20;
     this.rotateLine.style.width = '1px';
-    this.rotateLine.style.height = clientRect.height/2 + 5 + 20 + 'px';
+    this.rotateLine.style.height = clientRect.height / 2 + 5 + 20 + 'px';
     this.rotateLine.style.left = clientRect.left + clientRect.width / 2 + 'px';
-    this.rotateLine.style.top = clientRect.top - 5 - 20+ 'px';
+    this.rotateLine.style.top = clientRect.top - 5 - 20 + 'px';
     this.rotateLine.style.transformOrigin = x6 + 'px ' + y6 + 'px';
 
 
