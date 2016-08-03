@@ -45,6 +45,7 @@ var Painter = function (svgId) {
     this.handle3 = null;
     this.handle4 = null;
     this.handle5 = null;
+    this.rotateLine = null; //这里是旋转手柄的连接线
 
     this.rotateCenter = {x: 0, y: 0}; //当前选中图形的中心坐标,作为起点用来计算旋转斜率
 
@@ -279,6 +280,7 @@ Painter.prototype.rotate = function (element, deg, x, y) {
     this.handle3.style.transform = 'rotate(' + deg + 'deg)';
     this.handle4.style.transform = 'rotate(' + deg + 'deg)';
     this.handle5.style.transform = 'rotate(' + deg + 'deg)';
+    this.rotateLine.style.transform = 'rotate(' + deg + 'deg)';
 
 }
 
@@ -362,6 +364,8 @@ Painter.prototype.transform = function (key, value, element) {
 
     this.diff('transform', this.target, {transform: transformTxt});
 };
+
+// 这里处理菜单上的缩放事件
 
 // resize 用来在操作弹窗出现后,放大和缩小用
 Painter.prototype.resize = function (element, e) {
@@ -815,6 +819,16 @@ Painter.prototype.appendHandleBar = function () {
     this.handle5.id = 'svg-websocket-board-handle5';
     this.handle5.style.cursor = 'move';
 
+    // 这里是旋转手柄的连接线
+    this.rotateLine = document.createElement('div');
+    this.rotateLine.id = 'svg-websocket-board-rotate-line';
+    this.rotateLine.style.cursor = 'move';
+    this.rotateLine.style.position = 'absolute';
+    this.rotateLine.style.zIndex = '1190';
+    this.rotateLine.style.backgroundColor = 'red';
+
+
+
     var style = {
         width: "10px",
         height: "10px",
@@ -840,6 +854,7 @@ Painter.prototype.appendHandleBar = function () {
     this.mask.appendChild(this.handle3);
     this.mask.appendChild(this.handle4);
     this.mask.appendChild(this.handle5);
+    this.mask.appendChild(this.rotateLine);
 
 
     /**
@@ -1025,9 +1040,9 @@ Painter.prototype.showHandleBar = function (ele) {
 
     // 四个按钮旋转的便宜,第2个
     var x5 = 5;
-    var y5 = clientRect.height / 2 + 10;
+    var y5 = clientRect.height / 2 + 10 + 25;
     this.handle5.style.left = clientRect.left - 5 + clientRect.width / 2 + 'px';
-    this.handle5.style.top = clientRect.top - 10 + 'px';
+    this.handle5.style.top = clientRect.top - 10 - 25 + 'px';
     this.handle5.style.transformOrigin = x5 + 'px ' + y5 + 'px';
 
     // 首先计算宽高,然后定位左上角
@@ -1039,6 +1054,17 @@ Painter.prototype.showHandleBar = function (ele) {
 
     this.barLineWidth = clientRect.width;
     this.barLineHeight = clientRect.height;
+
+
+
+    var x6 = 0;
+    var y6 = clientRect.height/2 + 5 + 20;
+    this.rotateLine.style.width = '1px';
+    this.rotateLine.style.height = clientRect.height/2 + 5 + 20 + 'px';
+    this.rotateLine.style.left = clientRect.left + clientRect.width / 2 + 'px';
+    this.rotateLine.style.top = clientRect.top - 5 - 20+ 'px';
+    this.rotateLine.style.transformOrigin = x6 + 'px ' + y6 + 'px';
+
 
     // 将旋转的 bar 放在矩形的中心位置
     this.rotateBar.style.left = clientRect.left - 10 + clientRect.width / 2 + 'px';
