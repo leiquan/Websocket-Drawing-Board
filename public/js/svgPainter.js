@@ -912,7 +912,9 @@ Painter.prototype.appendHandleBar = function () {
 
         console.log(scaleX + ':' + scaleY);
 
-        self.transform('scale', scaleX + ' ' + scaleY, self.target)
+        self.transform('scale', scaleX + ' ' + scaleY, self.target);
+
+        self.showHandleBar(self.target);
 
 
         //var x2 = clientRect.width / 2;
@@ -937,6 +939,7 @@ Painter.prototype.appendHandleBar = function () {
 
                 // 添加鼠标移动的处理
                 self.mask.addEventListener('mousemove', maskMouseMoveScaleHandler, false);
+                handleFlag = maskMouseMoveScaleHandler;
 
             }
 
